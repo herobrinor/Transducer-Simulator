@@ -1,3 +1,4 @@
+package simulator;
 import java.util.Scanner;
 
 public class Simulator {
