@@ -2,6 +2,7 @@ package simulator;
 import java.util.Scanner;
 
 public class Simulator {
+    private Decoder decoder = new Decoder();
     public static void main(String[] args){
         Scanner sc = new Scanner(System.in);
         System.out.println("Please choose the type of the transducer model:\n" +
