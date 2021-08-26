@@ -15,7 +15,7 @@ import java.util.HashMap;
 public class TDFT extends Transducer{
     private Object[][] transition;
 
-    public TDFT(String initialState, String[] states, String[] finalStates, HashMap<String, Integer> inputAlphabet, HashMap<String, Integer> outputAlphabet, Object[][] transition) {
+    public TDFT(String initialState, HashMap<String, Integer> states, String[] finalStates, HashMap<String, Integer> inputAlphabet, String[] outputAlphabet, Object[][] transition) {
         super(initialState, states, finalStates, inputAlphabet, outputAlphabet);
         this.transition = transition;
     }

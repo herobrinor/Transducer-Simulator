@@ -12,7 +12,7 @@ public class Transducer {
     protected String initialState;
 
     // A set of all the states of the transducer.
-    protected String[] states;
+    protected HashMap<String, Integer> states;
 
     // A set of final states of the transducer.
     protected String[] finalStates;
@@ -23,7 +23,7 @@ public class Transducer {
     protected HashMap<String, Integer> inputAlphabet;
     
     // An output alphabet of the transducer.
-    protected HashMap<String, Integer> outputAlphabet;
+    protected String[] outputAlphabet;
 
     // Left endmarker for the transducer.
     protected String endMarkerL = "^";
@@ -31,7 +31,7 @@ public class Transducer {
     // Right endmarker for the transducer.
     protected String endMarkerR = "&";
 
-    public Transducer(String initialState, String[] states, String[] finalStates, HashMap<String, Integer> inputAlphabet, HashMap<String, Integer> outputAlphabet) {
+    public Transducer(String initialState, HashMap<String, Integer> states, String[] finalStates, HashMap<String, Integer> inputAlphabet, String[] outputAlphabet) {
         this.initialState = initialState;
         this.states = states;
         this.finalStates = finalStates;
