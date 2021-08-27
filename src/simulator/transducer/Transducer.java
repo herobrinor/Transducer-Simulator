@@ -1,6 +1,7 @@
 package simulator.transducer;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * It is a parent class for different transducers. It should not be instantiated.
@@ -15,7 +16,7 @@ public class Transducer {
     protected HashMap<String, Integer> states;
 
     // A set of final states of the transducer.
-    protected String[] finalStates;
+    protected HashSet<String> finalStates;
 
     // transition function is not set in the transducer class beacause of huge difference between models
 
@@ -31,7 +32,7 @@ public class Transducer {
     // Right endmarker for the transducer.
     protected String endMarkerR = "&";
 
-    public Transducer(String initialState, HashMap<String, Integer> states, String[] finalStates, HashMap<String, Integer> inputAlphabet, String[] outputAlphabet) {
+    public Transducer(String initialState, HashMap<String, Integer> states, HashSet<String> finalStates, HashMap<String, Integer> inputAlphabet, String[] outputAlphabet) {
         this.initialState = initialState;
         this.states = states;
         this.finalStates = finalStates;

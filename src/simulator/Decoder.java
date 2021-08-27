@@ -2,6 +2,7 @@ package simulator;
 
 import simulator.transducer.*;
 import java.util.HashMap;
+import java.util.HashSet;
 
 /** 
  * A decoder to tranlate encoding to tranducer recognisable information
@@ -14,7 +15,7 @@ public class Decoder {
     /**
      * Decode function for 2DFT
      * encoding of 2DFT : ({Q},{I},{O},{t:(q,a,b,q,n)},{q},{F})
-     * @param encodings Encoding of 2DFT
+     * @param encoding Encoding of 2DFT
      * @return An instance of 2DFT
      */
     public TDFT decodeTDFT(String encoding) {
@@ -22,19 +23,26 @@ public class Decoder {
         String[] sets = encoding.split("},{");
         String initialState = sets[4];
         String[] statesArray = sets[0].split(",");
-        String[] finalStates = sets[5].split(",");
+        String[] finalStatesArray = sets[5].split(",");
         String[] inAlpha = sets[1].split(",");
         String[] outputAlphabet = sets[2].split(",");
         String[] tranFunc = sets[3].split("),(");
         HashMap<String, Integer> states = new HashMap<String, Integer>();
         HashMap<String, Integer> inputAlphabet = new HashMap<String, Integer>();
-        Object[][] transition = new Object[0][0];
+        HashSet<String> finalStates = new HashSet<String>();
+        
         for (int i = 0; i < statesArray.length; i++) {
             states.put(statesArray[i],i);
         }
         for (int i = 0; i < inAlpha.length; i++) {
             inputAlphabet.put(inAlpha[i],i);
         }
+        for (int i = 0; i < finalStatesArray.length; i++) {
+            finalStates.add(finalStatesArray[i]);
+        }
+        inputAlphabet.put("^",inAlpha.length);
+        inputAlphabet.put("&",inAlpha.length+1);
+        Object[][][] transition = new Object[statesArray.length][inAlpha.length+2][3];
         String[] singleTrans;
         Object[] values = new Object[3];
         for (int i = 0; i < tranFunc.length; i++) {
@@ -47,7 +55,7 @@ public class Decoder {
             }
             values[0] = singleTrans[2];
             values[1] = singleTrans[3];
-            values[2] = singleTrans[4];
+            values[2] = Integer.parseInt(singleTrans[4]);
             transition[states.get(singleTrans[0])][inputAlphabet.get(singleTrans[1])] = values;
         }
         //construct an instance of 2DFT
