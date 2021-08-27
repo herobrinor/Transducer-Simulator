@@ -16,7 +16,7 @@ public class Decoder {
 
     /**
      * Decode function for 2DFT
-     * encoding of 2DFT : ({Q},{I},{O},{t:(q,a,b,q,n)},{q},{F})
+     * encoding format of 2DFT: ({Q},{I},{O},{t:(q,a,b,q,n)},{q},{F})
      * @param encoding Encoding of 2DFT
      * @return An instance of 2DFT
      */
@@ -32,7 +32,6 @@ public class Decoder {
         HashMap<String, Integer> states = new HashMap<String, Integer>();
         HashMap<String, Integer> inputAlphabet = new HashMap<String, Integer>();
         HashSet<String> finalStates = new HashSet<String>();
-
         for (int i = 0; i < statesArray.length; i++) {
             states.put(statesArray[i],i);
         }
@@ -44,6 +43,7 @@ public class Decoder {
         }
         inputAlphabet.put("^",inAlpha.length);
         inputAlphabet.put("&",inAlpha.length+1);
+        //store transition function
         Object[][][] transition = new Object[statesArray.length][inAlpha.length+2][3];
         String[] singleTrans;
         for (int i = 0; i < tranFunc.length; i++) {
