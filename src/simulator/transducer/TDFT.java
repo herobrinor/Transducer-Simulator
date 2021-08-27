@@ -11,7 +11,7 @@ import java.util.HashSet;
  *        t is a transition function
  *        q is the initial state
  *        F is a subset of Q, a set of final states
- * t: Q × (I U {^, &}) -> O* × Q × {−1, 0, +1}
+ * t: Q × (I U {^, &}) -> O* × Q × {-1, 0, +1}
  */
 public class TDFT extends Transducer{
     private Object[][][] transition;

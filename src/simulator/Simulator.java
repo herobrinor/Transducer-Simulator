@@ -55,9 +55,12 @@ public class Simulator {
         System.out.println("Please enter the encoding of transducer:");
         String modelDesc = sc.nextLine();
 
+        decoder = new Decoder();
+        System.out.println(modelDesc);
         switch (modelInt) {
             case 1:
-                TDFT tdft = decoder.decodeTDFT(modelDesc);
+            System.out.println("1");
+            TDFT tdft = decoder.decodeTDFT(modelDesc);
                 break;
         
             default:
