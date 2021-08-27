@@ -56,10 +56,8 @@ public class Simulator {
         String modelDesc = sc.nextLine();
 
         decoder = new Decoder();
-        System.out.println(modelDesc);
         switch (modelInt) {
             case 1:
-            System.out.println("1");
             TDFT tdft = decoder.decodeTDFT(modelDesc);
                 break;
         
