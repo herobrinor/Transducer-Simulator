@@ -25,7 +25,7 @@ public class Decoder {
         String[] sets = encoding.split("\\},\\{");
         String initialState = sets[4];
         String[] statesArray = sets[0].substring(2).split(",");
-        String[] finalStatesArray = sets[5].split(",");
+        String[] finalStatesArray = sets[5].substring(0,sets[5].length()-2).split(",");
         String[] inAlpha = sets[1].split(",");
         String[] outputAlphabet = sets[2].split(",");
         String[] tranFunc = sets[3].split("\\),\\(");

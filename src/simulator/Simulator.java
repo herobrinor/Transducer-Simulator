@@ -58,14 +58,20 @@ public class Simulator {
         decoder = new Decoder();
         switch (modelInt) {
             case 1:
-            TDFT tdft = decoder.decodeTDFT(modelDesc);
+                TDFT tdft = decoder.decodeTDFT(modelDesc);
+
+                System.out.println("Please enter the input string:");
+                String inpuString = sc.nextLine();
+        
+                String output = tdft.run(inpuString);
+                System.out.println("Output:");
+                System.out.println(output);
                 break;
         
             default:
                 break;
         }
 
-        System.out.println("Please enter the input string:\n");
-        String inpuString = sc.nextLine();
+
     }
 }

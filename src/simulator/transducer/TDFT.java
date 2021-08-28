@@ -1,4 +1,5 @@
 package simulator.transducer;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -36,10 +37,14 @@ public class TDFT extends Transducer{
         // current position on input tape
         int currPosition = 1;
         String output = "";
+        int currStateNum;
+        int currInputNum;
         while (!finalStates.contains(currState) && currPosition >= 0 && currPosition < stringArray.length) {
-            currState = (String) transition[states.get(currState)][inputAlphabet.get(String.valueOf(stringArray[currPosition]))][1];
-            output += (String) transition[states.get(currState)][inputAlphabet.get(String.valueOf(stringArray[currPosition]))][0];
-            currPosition += (int) transition[states.get(currState)][inputAlphabet.get(String.valueOf(stringArray[currPosition]))][2];
+            currStateNum = states.get(currState);
+            currInputNum = inputAlphabet.get(String.valueOf(stringArray[currPosition]));
+            currState = (String) transition[currStateNum][currInputNum][1];
+            output += (String) transition[currStateNum][currInputNum][0];
+            currPosition += (int) transition[currStateNum][currInputNum][2];
         }
         return output;
     }
