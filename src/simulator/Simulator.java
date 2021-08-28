@@ -48,30 +48,39 @@ public class Simulator {
     private void run(){
         Scanner sc = new Scanner(System.in);
         decoder = new Decoder();
-
+        
         //ask user for model choice
         System.out.println("Please choose the type of the transducer model:\n" +
                             "1: 2DFT\n" +
                             "2: MSOT\n" +
                             "3: SST");
         int modelInt = Integer.parseInt(sc.nextLine());
-        //ask user for model encoding
-        System.out.println("Please enter the encoding of transducer:");
-        String modelDesc = sc.nextLine();
 
         //construct model instance according to model input
         while (modelInt != 0) {
+
+            //ask user for model encoding
+            System.out.println("Please enter the encoding of transducer:");
+            String modelDesc = sc.nextLine();
+
             switch (modelInt) {
                 case 1:
                     TDFT tdft = decoder.decodeTDFT(modelDesc);
                     System.out.println("Please enter the input string:");
-                    String inpuString = sc.nextLine();
-                    while (!inpuString.equals("q")) {
-                        String output = tdft.run(inpuString);
-                        System.out.println("Output:");
-                        System.out.println(output);
-                        System.out.println("Please enter the input string:");
-                        inpuString = sc.nextLine();
+                    String inputString = sc.nextLine();
+                    while (!inputString.equals("q")) {
+                        if (tdft.vaildInput(inputString)) {
+                            String output = tdft.run(inputString);
+                            System.out.println("Output:");
+                            System.out.println(output);
+                            System.out.println("Please enter the input string:");
+                            inputString = sc.nextLine();
+                        } else {
+                            System.err.println("Invaild input.");
+                            System.out.println("Please enter the input string:");
+                            inputString = sc.nextLine();
+                        }
+                        
                     }
                     break;
             
@@ -89,7 +98,8 @@ public class Simulator {
             modelDesc = sc.nextLine();
         }
         
-
+        //close scanner to prevent resource leak
+        sc.close();
 
     }
 }

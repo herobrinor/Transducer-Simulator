@@ -1,5 +1,5 @@
 package simulator.transducer;
-import java.util.Arrays;
+
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -47,5 +47,22 @@ public class TDFT extends Transducer{
             currPosition += (int) transition[currStateNum][currInputNum][2];
         }
         return output;
+    }
+
+    /**
+     * Check whether input string is vaild
+     * @param inputString input string
+     * @return validation of input string
+     */
+    public Boolean vaildInput(String inputString) {
+        char [] stringArray = inputString.toCharArray();
+        Boolean validation = true;
+        //check weather every symbol is in the input Alphabet
+        for (char c : stringArray) {
+            if (!inputAlphabet.containsKey(String.valueOf(c))) {
+                validation = false;
+            }
+        }
+        return validation;
     }
 }
