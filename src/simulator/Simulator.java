@@ -47,30 +47,48 @@ public class Simulator {
 
     private void run(){
         Scanner sc = new Scanner(System.in);
+        decoder = new Decoder();
+
+        //ask user for model choice
         System.out.println("Please choose the type of the transducer model:\n" +
                             "1: 2DFT\n" +
-                            "2: SST");
+                            "2: MSOT\n" +
+                            "3: SST");
         int modelInt = Integer.parseInt(sc.nextLine());
-
+        //ask user for model encoding
         System.out.println("Please enter the encoding of transducer:");
         String modelDesc = sc.nextLine();
 
-        decoder = new Decoder();
-        switch (modelInt) {
-            case 1:
-                TDFT tdft = decoder.decodeTDFT(modelDesc);
+        //construct model instance according to model input
+        while (modelInt != 0) {
+            switch (modelInt) {
+                case 1:
+                    TDFT tdft = decoder.decodeTDFT(modelDesc);
+                    System.out.println("Please enter the input string:");
+                    String inpuString = sc.nextLine();
+                    while (!inpuString.equals("q")) {
+                        String output = tdft.run(inpuString);
+                        System.out.println("Output:");
+                        System.out.println(output);
+                        System.out.println("Please enter the input string:");
+                        inpuString = sc.nextLine();
+                    }
+                    break;
+            
+                default:
+                    break;
+            }
 
-                System.out.println("Please enter the input string:");
-                String inpuString = sc.nextLine();
-        
-                String output = tdft.run(inpuString);
-                System.out.println("Output:");
-                System.out.println(output);
-                break;
-        
-            default:
-                break;
+            System.out.println("Please choose the type of the transducer model:\n" +
+                               "1: 2DFT\n" +
+                               "2: MSOT\n" +
+                               "3: SST");
+            modelInt = Integer.parseInt(sc.nextLine());
+
+            System.out.println("Please enter the encoding of transducer:");
+            modelDesc = sc.nextLine();
         }
+        
 
 
     }
