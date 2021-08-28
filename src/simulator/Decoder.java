@@ -63,4 +63,15 @@ public class Decoder {
         TDFT transducer = new TDFT(initialState, states, finalStates, inputAlphabet, outputAlphabet, transition);
         return transducer;
     }
+
+    /**
+     * Check whether the encoding of 2DFT is vaild
+     * @param encoding Encoding of 2DFT
+     * @return validation of encoding
+     */
+    public Boolean vaildTDFT(String encoding) {
+        String pattern = "\\(\\{.*(,.*)*\\}(,\\{.*(,.*)*\\}){2}, \\{\\(.*(,.*){4}\\)(\\(.*(,.*){4}\\))*\\} ,\\{.*\\},\\{.*(,.*)*\\}\\)";
+        Boolean validation = encoding.matches(pattern);
+        return validation;
+    }
 }

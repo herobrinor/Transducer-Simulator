@@ -93,9 +93,6 @@ public class Simulator {
                                "2: MSOT\n" +
                                "3: SST");
             modelInt = Integer.parseInt(sc.nextLine());
-
-            System.out.println("Please enter the encoding of transducer:");
-            modelDesc = sc.nextLine();
         }
         
         //close scanner to prevent resource leak
