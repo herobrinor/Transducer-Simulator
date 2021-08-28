@@ -73,42 +73,53 @@ public class Simulator {
         //construct model instance according to model input
         while (modelInt != 0) {
             if (modelInt >= 1 && modelInt <= 3) {
-                //ask user for model encoding
-                System.out.println("Please enter the encoding of transducer:");
-                String modelDesc = sc.nextLine();
-                while (!decoder.vaildTDFT(modelDesc) && !modelDesc.equals("q")) {
-                    System.err.println("Encoding invalid.");
-                    System.out.println("Please enter the encoding of transducer:");
-                    modelDesc = sc.nextLine();
-                }
-                if (!modelDesc.equals("q")) {
-                    // initialise different transducer according to model choice
-                    switch (modelInt) {
-                        case 1:
-                            TDFT tdft = decoder.decodeTDFT(modelDesc);
-                            System.out.println("Please enter the input string:");
-                            String inputString = sc.nextLine();
-                            while (!inputString.equals("q")) {
-                                if (tdft.vaildInput(inputString)) {
-                                    String output = tdft.run(inputString);
-                                    System.out.println("Output:");
-                                    System.out.println(output);
-                                    System.out.println("Please enter the input string:");
-                                    inputString = sc.nextLine();
-                                } else {
-                                    System.err.println("Invaild input.");
-                                    System.out.println("Please enter the input string:");
-                                    inputString = sc.nextLine();
-                                }
+                // initialise different transducer according to model choice
+                switch (modelInt) {
+                    case 1:
+                        //ask user for model encoding
+                        System.out.println("Please enter the encoding of transducer:");
+                        String modelDesc = sc.nextLine();
+                        while (!decoder.vaildTDFT(modelDesc) && !modelDesc.equals("q")) {
+                            System.out.println(decoder.vaildTDFT(modelDesc).toString());
+                            System.err.println("Encoding invalid.");
+                            System.out.println("Please enter the encoding of transducer:");
+                            modelDesc = sc.nextLine();
+                        }
+                        if (modelDesc.equals("q")) {
+                            break;
+                        }
+                        TDFT tdft;
+                        try {
+                            // initialise a 2DFT instance
+                            tdft = decoder.decodeTDFT(modelDesc);
+                        } catch (Exception e) {
+                            System.err.println("Construction Error. Please check encoding of 2DFT.");
+                            break;
+                        }
+                        
+                        // ask for input string to simulator on this instance
+                        System.out.println("Please enter the input string:");
+                        String inputString = sc.nextLine();
+                        while (!inputString.equals("q")) {
+                            if (tdft.vaildInput(inputString)) {
+                                String output = tdft.run(inputString);
+                                System.out.println("Output:");
+                                System.out.println(output);
+                                System.out.println("Please enter the input string:");
+                                inputString = sc.nextLine();
+                            } else {
+                                System.err.println("Invaild input.");
+                                System.out.println("Please enter the input string:");
+                                inputString = sc.nextLine();
                             }
-                            break;
-                        case 2:
-                            break;
-                        case 3:
-                            break;    
-                        default:
-                            break;
-                    }
+                        }
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;    
+                    default:
+                        break;
                 }
             } else {
                 System.err.println("Invalid choice number. Please enter again.");

@@ -70,7 +70,7 @@ public class Decoder {
      * @return validation of encoding
      */
     public Boolean vaildTDFT(String encoding) {
-        String pattern = "\\(\\{.*(,.*)*\\}(,\\{.*(,.*)*\\}){2}, \\{\\(.*(,.*){4}\\)(\\(.*(,.*){4}\\))*\\} ,\\{.*\\},\\{.*(,.*)*\\}\\)";
+        String pattern = "\\(\\{.*(,.*)*\\}(,\\{.*(,.*)*\\}){2},\\{\\(.*(,.*){4}\\)(\\(.*(,.*){4}\\))*\\},\\{.*\\},\\{.*(,.*)*\\}\\)";
         Boolean validation = encoding.matches(pattern);
         return validation;
     }
