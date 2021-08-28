@@ -46,53 +46,86 @@ public class Simulator {
     }
 
     private void run(){
+
+        // initialise a scanner for user input
         Scanner sc = new Scanner(System.in);
+
+        // initialise a decoder
         decoder = new Decoder();
+
+        // model choice (-1 for invalid input)
+        int modelInt = -1;
         
         //ask user for model choice
         System.out.println("Please choose the type of the transducer model:\n" +
                             "1: 2DFT\n" +
                             "2: MSOT\n" +
-                            "3: SST");
-        int modelInt = Integer.parseInt(sc.nextLine());
+                            "3: SST\n" +
+                            "0: exit");
+        try {
+            modelInt = Integer.parseInt(sc.nextLine());
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid choice number. Please enter again.");
+            modelInt = -1;
+        }
+        
 
         //construct model instance according to model input
         while (modelInt != 0) {
-
-            //ask user for model encoding
-            System.out.println("Please enter the encoding of transducer:");
-            String modelDesc = sc.nextLine();
-
-            switch (modelInt) {
-                case 1:
-                    TDFT tdft = decoder.decodeTDFT(modelDesc);
-                    System.out.println("Please enter the input string:");
-                    String inputString = sc.nextLine();
-                    while (!inputString.equals("q")) {
-                        if (tdft.vaildInput(inputString)) {
-                            String output = tdft.run(inputString);
-                            System.out.println("Output:");
-                            System.out.println(output);
+            if (modelInt >= 1 && modelInt <= 3) {
+                //ask user for model encoding
+                System.out.println("Please enter the encoding of transducer:");
+                String modelDesc = sc.nextLine();
+                while (!decoder.vaildTDFT(modelDesc) && !modelDesc.equals("q")) {
+                    System.err.println("Encoding invalid.");
+                    System.out.println("Please enter the encoding of transducer:");
+                    modelDesc = sc.nextLine();
+                }
+                if (!modelDesc.equals("q")) {
+                    // initialise different transducer according to model choice
+                    switch (modelInt) {
+                        case 1:
+                            TDFT tdft = decoder.decodeTDFT(modelDesc);
                             System.out.println("Please enter the input string:");
-                            inputString = sc.nextLine();
-                        } else {
-                            System.err.println("Invaild input.");
-                            System.out.println("Please enter the input string:");
-                            inputString = sc.nextLine();
-                        }
-                        
+                            String inputString = sc.nextLine();
+                            while (!inputString.equals("q")) {
+                                if (tdft.vaildInput(inputString)) {
+                                    String output = tdft.run(inputString);
+                                    System.out.println("Output:");
+                                    System.out.println(output);
+                                    System.out.println("Please enter the input string:");
+                                    inputString = sc.nextLine();
+                                } else {
+                                    System.err.println("Invaild input.");
+                                    System.out.println("Please enter the input string:");
+                                    inputString = sc.nextLine();
+                                }
+                            }
+                            break;
+                        case 2:
+                            break;
+                        case 3:
+                            break;    
+                        default:
+                            break;
                     }
-                    break;
-            
-                default:
-                    break;
+                }
+            } else {
+                System.err.println("Invalid choice number. Please enter again.");
             }
-
+            
+            // ask for model choice again
             System.out.println("Please choose the type of the transducer model:\n" +
                                "1: 2DFT\n" +
                                "2: MSOT\n" +
-                               "3: SST");
-            modelInt = Integer.parseInt(sc.nextLine());
+                               "3: SST\n" +
+                               "0: exit");
+            try {
+                modelInt = Integer.parseInt(sc.nextLine());
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid choice number. Please enter again.");
+                modelInt = -1;
+            }
         }
         
         //close scanner to prevent resource leak
