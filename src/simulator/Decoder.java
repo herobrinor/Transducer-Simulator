@@ -74,4 +74,26 @@ public class Decoder {
         Boolean validation = encoding.matches(pattern);
         return validation;
     }
+
+    /**
+     * Decode function for MSOT
+     * encoding format of MSOT: ({Q},{I},{O},{t:(q,a,b,q,n)},{q},{F})
+     * @param encoding Encoding of MSOT
+     * @return An instance of MSOT
+     */
+    // public MSOT decodeMSOT(String encoding) {
+    //     TODO:
+    // }
+
+    /**
+     * Check whether the encoding of 2DFT is vaild
+     * @param encoding Encoding of 2DFT
+     * @return validation of encoding
+     */
+    public Boolean vaildMSOT(String encoding) {
+        //TODO:
+        String pattern = "";
+        Boolean validation = encoding.matches(pattern);
+        return validation;
+    }
 }
