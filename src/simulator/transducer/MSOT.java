@@ -17,4 +17,16 @@ public class MSOT{
     public MSOT(String initialState, HashMap<String, Integer> states, HashSet<String> finalStates, HashMap<String, Integer> inputAlphabet, String[] outputAlphabet){
 
     }
+
+    /**
+     * Run MSOT over input string
+     * @param inputString input string
+     * @return Output string
+     */
+    public String run(String inputString) {
+        //TODO
+        String output = "";
+        
+        return output;
+    }
 }
