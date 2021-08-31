@@ -96,7 +96,7 @@ public class Decoder {
      * @return validation of encoding
      */
     public Boolean vaildMSOT(String encoding) {
-        //TODO:
+        //TODO: regular expression of MSOT encoding
         String pattern = "";
         Boolean validation = encoding.matches(pattern);
         return validation;
@@ -104,13 +104,87 @@ public class Decoder {
 
     /**
      * Decode function for SST
-     * encoding format of SST: ({Q},{I},{O},{t:(q,a,b,q,n)},{q},{F})
+     * encoding format of SST: ({Q},{I},{O},{X},{q},{f:(q,b)},{t1:(q,a,q)},{f:(q,a,x,b)})
      * @param encoding Encoding of SST
      * @return An instance of SST
      */
-    // public SST decodeSST(String encoding) {
-    //     TODO:
-    // }
+    public SST decodeSST(String encoding) {
+        //split the encoding string into different parts and storing in different arrays or hashmaps
+        String[] sets = encoding.split("\\},\\{");
+
+        String[] statesArray = sets[0].substring(2).split(",");
+        
+        String[] inAlpha = sets[1].split(",");
+        String[] outAlpha = sets[2].split(",");
+        String[] varArray = sets[3].split(",");
+        String initialState = sets[4];
+        String[] outputFunc = sets[5].split("\\),\\(");
+        String[] tranFunc = sets[6].split("\\),\\(");
+        String[] updateFunc = sets[7].substring(0,sets[7].length()-2).split(",");
+        HashMap<String, Integer> states = new HashMap<String, Integer>();
+        HashMap<String, Integer> inputAlphabet = new HashMap<String, Integer>();
+        HashSet<String> outputAlphabet = new HashSet<String>();
+        HashMap<String, Integer> variables = new HashMap<String, Integer>();
+        for (int i = 0; i < statesArray.length; i++) {
+            states.put(statesArray[i],i);
+        }
+        for (int i = 0; i < inAlpha.length; i++) {
+            inputAlphabet.put(inAlpha[i],i);
+        }
+        for (int i = 0; i < outAlpha.length; i++) {
+            outputAlphabet.add(outAlpha[i]);
+        }
+        for (int i = 0; i < varArray.length; i++) {
+            variables.put(varArray[i],i);
+        }
+
+        String[] partialOutput = new String[statesArray.length];
+        String[][] stateTransition = new String[statesArray.length][inAlpha.length];
+        String[][][] variableUpdate = new String[statesArray.length][inAlpha.length][varArray.length];
+
+        String[] singleTrans;
+        for (int i = 0; i < outputFunc.length; i++) {
+            if (i == 0) {
+                singleTrans = outputFunc[i].substring(1).split(",");
+            } else if (i == outputFunc.length-1) {
+                singleTrans = outputFunc[i].substring(0,outputFunc[i].length()-1).split(",");
+            } else {
+                singleTrans = outputFunc[i].split(",");
+            }           
+            int state = states.get(singleTrans[0]);
+            partialOutput[state] = singleTrans[1];
+        }
+
+        for (int i = 0; i < tranFunc.length; i++) {
+            if (i == 0) {
+                singleTrans = tranFunc[i].substring(1).split(",");
+            } else if (i == tranFunc.length-1) {
+                singleTrans = tranFunc[i].substring(0,tranFunc[i].length()-1).split(",");
+            } else {
+                singleTrans = tranFunc[i].split(",");
+            }           
+            int state = states.get(singleTrans[0]);
+            int symbol = inputAlphabet.get(singleTrans[1]);
+            stateTransition[state][symbol] = singleTrans[2];
+        }
+
+        for (int i = 0; i < updateFunc.length; i++) {
+            if (i == 0) {
+                singleTrans = updateFunc[i].substring(1).split(",");
+            } else if (i == updateFunc.length-1) {
+                singleTrans = updateFunc[i].substring(0,updateFunc[i].length()-1).split(",");
+            } else {
+                singleTrans = updateFunc[i].split(",");
+            }           
+            int state = states.get(singleTrans[0]);
+            int symbol = inputAlphabet.get(singleTrans[1]);
+            int var = variables.get(singleTrans[2]);
+            variableUpdate[state][symbol][var] = singleTrans[3];
+        }
+
+        SST sst = new SST(initialState, states, inputAlphabet, outputAlphabet, variables, partialOutput, stateTransition, variableUpdate);
+        return sst;
+    }
 
     /**
      * Check whether the encoding of SST is vaild
