@@ -60,6 +60,10 @@ public class SST extends Transducer{
         String newValue;
         String currSymbol;
 
+        for (String variable: variables.keySet()) {
+            variableValue.put(variable, "");
+        }
+
         for (int currPosition = 0; currPosition < stringArray.length; currPosition++) {
             currStateNum = states.get(currState);
             currInputNum = inputAlphabet.get(String.valueOf(stringArray[currPosition]));
