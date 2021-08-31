@@ -74,7 +74,8 @@ public class Decoder {
      * @return validation of encoding
      */
     public Boolean vaildTDFT(String encoding) {
-        String pattern = "\\(\\{.*(,.*)*\\}(,\\{.*(,.*)*\\}){2},\\{\\(.*(,.*){4}\\)(\\(.*(,.*){4}\\))*\\},\\{.*\\},\\{.*(,.*)*\\}\\)";
+        // regular expression of 2DFT encoding
+        String pattern = "\\(\\{.*(,.*)*\\}(,\\{.*(,.*)*\\}){2},\\{(\\(.*(,.*){4}\\))+\\},\\{.*\\},\\{.*(,.*)*\\}\\)";
         Boolean validation = encoding.matches(pattern);
         return validation;
     }
@@ -112,13 +113,13 @@ public class Decoder {
     // }
 
     /**
-     * Check whether the encoding of 2DFT is vaild
-     * @param encoding Encoding of 2DFT
+     * Check whether the encoding of SST is vaild
+     * @param encoding Encoding of SST
      * @return validation of encoding
      */
     public Boolean vaildSST(String encoding) {
-        //TODO:
-        String pattern = "";
+        // regular expression of SST encoding
+        String pattern = "\\(\\{.*(,.*)*\\}(,\\{.*(,.*)*\\}){2},\\{.(,.)*\\},\\{.*\\},\\{(\\(.*,.*\\))+\\},\\{(\\(.*(,.*){2}\\))+\\},\\{(\\(.*,.*,.,.*\\))+\\}\\)";
         Boolean validation = encoding.matches(pattern);
         return validation;
     }
