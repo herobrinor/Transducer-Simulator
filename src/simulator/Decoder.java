@@ -104,7 +104,7 @@ public class Decoder {
 
     /**
      * Decode function for SST
-     * encoding format of SST: ({Q},{I},{O},{X},{q},{f:(q,b)},{t1:(q,a,q)},{f:(q,a,x,b)})
+     * encoding format of SST: ({Q},{I},{O},{X},{q},{f:(q,b)},{t1:(q,a,q)},{t2:(q,a,x,b)})
      * @param encoding Encoding of SST
      * @return An instance of SST
      */

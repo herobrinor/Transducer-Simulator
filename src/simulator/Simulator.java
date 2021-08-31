@@ -1,7 +1,8 @@
 package simulator;
 import java.util.Scanner;
 
-import simulator.transducer.TDFT;
+import simulator.transducer.*;
+
 
 public class Simulator {
 
@@ -68,8 +69,9 @@ public class Simulator {
             System.err.println("Invalid choice number. Please enter again.");
             modelInt = -1;
         }
-        
 
+        String modelDesc;
+        String inputString;
         //construct model instance according to model input
         while (modelInt != 0) {
             if (modelInt >= 1 && modelInt <= 3) {
@@ -78,9 +80,8 @@ public class Simulator {
                     case 1:
                         //ask user for model encoding
                         System.out.println("Please enter the encoding of transducer:");
-                        String modelDesc = sc.nextLine();
+                        modelDesc = sc.nextLine();
                         while (!decoder.vaildTDFT(modelDesc) && !modelDesc.equals("q")) {
-                            System.out.println(decoder.vaildTDFT(modelDesc).toString());
                             System.err.println("Encoding invalid.");
                             System.out.println("Please enter the encoding of transducer:");
                             modelDesc = sc.nextLine();
@@ -99,7 +100,7 @@ public class Simulator {
                         
                         // ask for input string to simulator on this instance
                         System.out.println("Please enter the input string:");
-                        String inputString = sc.nextLine();
+                        inputString = sc.nextLine();
                         while (!inputString.equals("q")) {
                             if (tdft.vaildInput(inputString)) {
                                 String output = tdft.run(inputString);
@@ -117,6 +118,42 @@ public class Simulator {
                     case 2:
                         break;
                     case 3:
+                        //ask user for model encoding
+                        System.out.println("Please enter the encoding of transducer:");
+                        modelDesc = sc.nextLine();
+                        while (!decoder.vaildSST(modelDesc) && !modelDesc.equals("q")) {
+                            System.err.println("Encoding invalid.");
+                            System.out.println("Please enter the encoding of transducer:");
+                            modelDesc = sc.nextLine();
+                        }
+                        if (modelDesc.equals("q")) {
+                            break;
+                        }
+                        SST sst;
+                        try {
+                            // initialise a SST instance
+                            sst = decoder.decodeSST(modelDesc);
+                        } catch (Exception e) {
+                            System.err.println("Construction Error. Please check encoding of 2DFT.");
+                            break;
+                        }
+                        
+                        // ask for input string to simulator on this instance
+                        System.out.println("Please enter the input string:");
+                        inputString = sc.nextLine();
+                        while (!inputString.equals("q")) {
+                            if (sst.vaildInput(inputString)) {
+                                String output = sst.run(inputString);
+                                System.out.println("Output:");
+                                System.out.println(output);
+                                System.out.println("Please enter the input string:");
+                                inputString = sc.nextLine();
+                            } else {
+                                System.err.println("Invaild input.");
+                                System.out.println("Please enter the input string:");
+                                inputString = sc.nextLine();
+                            }
+                        }
                         break;    
                     default:
                         break;
