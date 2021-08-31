@@ -15,11 +15,17 @@ import java.util.HashSet;
  * t: Q × (I U {^, &}) -> O* × Q × {-1, 0, +1}
  */
 public class TDFT extends Transducer{
+
+    // A transition function of the transducer.
     private Object[][][] transition;
 
-    public TDFT(String initialState, HashMap<String, Integer> states, HashSet<String> finalStates, HashMap<String, Integer> inputAlphabet, String[] outputAlphabet, Object[][][] transition) {
-        super(initialState, states, finalStates, inputAlphabet, outputAlphabet);
+    // A set of final states of the transducer.
+    protected HashSet<String> finalStates;
+
+    public TDFT(String initialState, HashMap<String, Integer> states, HashSet<String> finalStates, HashMap<String, Integer> inputAlphabet, HashSet<String> outputAlphabet, Object[][][] transition) {
+        super(initialState, states, inputAlphabet, outputAlphabet);
         this.transition = transition;
+        this.finalStates = finalStates;
     }
 
     /**

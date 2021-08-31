@@ -26,16 +26,20 @@ public class Decoder {
         String[] statesArray = sets[0].substring(2).split(",");
         String[] finalStatesArray = sets[5].substring(0,sets[5].length()-2).split(",");
         String[] inAlpha = sets[1].split(",");
-        String[] outputAlphabet = sets[2].split(",");
+        String[] outAlpha = sets[2].split(",");
         String[] tranFunc = sets[3].split("\\),\\(");
         HashMap<String, Integer> states = new HashMap<String, Integer>();
         HashMap<String, Integer> inputAlphabet = new HashMap<String, Integer>();
         HashSet<String> finalStates = new HashSet<String>();
+        HashSet<String> outputAlphabet = new HashSet<String>();
         for (int i = 0; i < statesArray.length; i++) {
             states.put(statesArray[i],i);
         }
         for (int i = 0; i < inAlpha.length; i++) {
             inputAlphabet.put(inAlpha[i],i);
+        }
+        for (int i = 0; i < outAlpha.length; i++) {
+            outputAlphabet.add(outAlpha[i]);
         }
         for (int i = 0; i < finalStatesArray.length; i++) {
             finalStates.add(finalStatesArray[i]);
@@ -91,6 +95,28 @@ public class Decoder {
      * @return validation of encoding
      */
     public Boolean vaildMSOT(String encoding) {
+        //TODO:
+        String pattern = "";
+        Boolean validation = encoding.matches(pattern);
+        return validation;
+    }
+
+    /**
+     * Decode function for SST
+     * encoding format of SST: ({Q},{I},{O},{t:(q,a,b,q,n)},{q},{F})
+     * @param encoding Encoding of SST
+     * @return An instance of SST
+     */
+    // public SST decodeSST(String encoding) {
+    //     TODO:
+    // }
+
+    /**
+     * Check whether the encoding of 2DFT is vaild
+     * @param encoding Encoding of 2DFT
+     * @return validation of encoding
+     */
+    public Boolean vaildSST(String encoding) {
         //TODO:
         String pattern = "";
         Boolean validation = encoding.matches(pattern);

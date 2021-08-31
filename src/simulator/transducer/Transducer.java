@@ -15,16 +15,13 @@ public class Transducer {
     // A set of all the states of the transducer.
     protected HashMap<String, Integer> states;
 
-    // A set of final states of the transducer.
-    protected HashSet<String> finalStates;
-
     // transition function is not set in the transducer class beacause of huge difference between models
 
     // An input alphabet of the transducer.
     protected HashMap<String, Integer> inputAlphabet;
     
     // An output alphabet of the transducer.
-    protected String[] outputAlphabet;
+    protected HashSet<String> outputAlphabet;
 
     // Left endmarker for the transducer.
     protected String endMarkerL = "^";
@@ -32,10 +29,9 @@ public class Transducer {
     // Right endmarker for the transducer.
     protected String endMarkerR = "&";
 
-    public Transducer(String initialState, HashMap<String, Integer> states, HashSet<String> finalStates, HashMap<String, Integer> inputAlphabet, String[] outputAlphabet) {
+    public Transducer(String initialState, HashMap<String, Integer> states, HashMap<String, Integer> inputAlphabet, HashSet<String> outputAlphabet) {
         this.initialState = initialState;
         this.states = states;
-        this.finalStates = finalStates;
         this.inputAlphabet = inputAlphabet;
         this.outputAlphabet = outputAlphabet;
     }
