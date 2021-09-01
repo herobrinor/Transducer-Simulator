@@ -83,7 +83,7 @@ public class Simulator {
                         modelDesc = sc.nextLine();
                         while (!decoder.vaildTDFT(modelDesc) && !modelDesc.equals("q")) {
                             System.err.println("Encoding invalid.");
-                            System.out.println("Please enter the encoding of transducer:");
+                            System.out.println("Please enter the encoding of 2DFT:");
                             modelDesc = sc.nextLine();
                         }
                         if (modelDesc.equals("q")) {
@@ -119,7 +119,7 @@ public class Simulator {
                         break;
                     case 3:
                         //ask user for model encoding
-                        System.out.println("Please enter the encoding of transducer:");
+                        System.out.println("Please enter the encoding of SST:");
                         modelDesc = sc.nextLine();
                         while (!decoder.vaildSST(modelDesc) && !modelDesc.equals("q")) {
                             System.err.println("Encoding invalid.");
@@ -134,7 +134,7 @@ public class Simulator {
                             // initialise a SST instance
                             sst = decoder.decodeSST(modelDesc);
                         } catch (Exception e) {
-                            System.err.println("Construction Error. Please check encoding of 2DFT.");
+                            System.err.println("Construction Error. Please check encoding of SST.");
                             break;
                         }
                         

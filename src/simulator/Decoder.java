@@ -2,6 +2,7 @@ package simulator;
 
 import simulator.transducer.*;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -75,7 +76,7 @@ public class Decoder {
      */
     public Boolean vaildTDFT(String encoding) {
         // regular expression of 2DFT encoding
-        String pattern = "\\(\\{.*(,.*)*\\}(,\\{.*(,.*)*\\}){2},\\{(\\(.*(,.*){4}\\))+\\},\\{.*\\},\\{.*(,.*)*\\}\\)";
+        String pattern = "\\(\\{[A-Za-z0-9]*(,[A-Za-z0-9]*)*\\}(,\\{[A-Za-z0-9]*(,[A-Za-z0-9]*)*\\}){2},\\{\\([A-Za-z0-9]*(,[A-Za-z0-9^&]*){4}\\)(,\\([A-Za-z0-9]*(,[A-Za-z0-9^&]*){4}\\))*\\},\\{[A-Za-z0-9]*\\},\\{[A-Za-z0-9]*(,[A-Za-z0-9]*)*\\}\\)";
         Boolean validation = encoding.matches(pattern);
         return validation;
     }
@@ -111,16 +112,14 @@ public class Decoder {
     public SST decodeSST(String encoding) {
         //split the encoding string into different parts and storing in different arrays or hashmaps
         String[] sets = encoding.split("\\},\\{");
-
         String[] statesArray = sets[0].substring(2).split(",");
-        
         String[] inAlpha = sets[1].split(",");
         String[] outAlpha = sets[2].split(",");
         String[] varArray = sets[3].split(",");
         String initialState = sets[4];
         String[] outputFunc = sets[5].split("\\),\\(");
         String[] tranFunc = sets[6].split("\\),\\(");
-        String[] updateFunc = sets[7].substring(0,sets[7].length()-2).split(",");
+        String[] updateFunc = sets[7].substring(0,sets[7].length()-2).split("\\),\\(");
         HashMap<String, Integer> states = new HashMap<String, Integer>();
         HashMap<String, Integer> inputAlphabet = new HashMap<String, Integer>();
         HashSet<String> outputAlphabet = new HashSet<String>();
@@ -143,43 +142,64 @@ public class Decoder {
         String[][][] variableUpdate = new String[statesArray.length][inAlpha.length][varArray.length];
 
         String[] singleTrans;
-        for (int i = 0; i < outputFunc.length; i++) {
-            if (i == 0) {
-                singleTrans = outputFunc[i].substring(1).split(",");
-            } else if (i == outputFunc.length-1) {
-                singleTrans = outputFunc[i].substring(0,outputFunc[i].length()-1).split(",");
-            } else {
-                singleTrans = outputFunc[i].split(",");
-            }           
+
+        if (outputFunc.length == 1) {
+            singleTrans = outputFunc[0].substring(1,outputFunc[0].length()-1).split(",");
             int state = states.get(singleTrans[0]);
             partialOutput[state] = singleTrans[1];
+        } else {
+            for (int i = 0; i < outputFunc.length; i++) {
+                if (i == 0) {
+                    singleTrans = outputFunc[i].substring(1).split(",");
+                } else if (i == outputFunc.length-1) {
+                    singleTrans = outputFunc[i].substring(0,outputFunc[i].length()-1).split(",");
+                } else {
+                    singleTrans = outputFunc[i].split(",");
+                }           
+                int state = states.get(singleTrans[0]);
+                partialOutput[state] = singleTrans[1];
+            }
         }
-
-        for (int i = 0; i < tranFunc.length; i++) {
-            if (i == 0) {
-                singleTrans = tranFunc[i].substring(1).split(",");
-            } else if (i == tranFunc.length-1) {
-                singleTrans = tranFunc[i].substring(0,tranFunc[i].length()-1).split(",");
-            } else {
-                singleTrans = tranFunc[i].split(",");
-            }           
+        
+        if (tranFunc.length == 1) {
+            singleTrans = tranFunc[0].substring(1,tranFunc[0].length()-1).split(",");
             int state = states.get(singleTrans[0]);
             int symbol = inputAlphabet.get(singleTrans[1]);
             stateTransition[state][symbol] = singleTrans[2];
+        } else {
+            for (int i = 0; i < tranFunc.length; i++) {
+                if (i == 0) {
+                     singleTrans = tranFunc[i].substring(1).split(",");
+                 } else if (i == tranFunc.length-1) {
+                    singleTrans = tranFunc[i].substring(0,tranFunc[i].length()-1).split(",");
+                } else {
+                     singleTrans = tranFunc[i].split(",");
+                }      
+                int state = states.get(singleTrans[0]);
+                int symbol = inputAlphabet.get(singleTrans[1]);
+                stateTransition[state][symbol] = singleTrans[2];
+            }
         }
-
-        for (int i = 0; i < updateFunc.length; i++) {
-            if (i == 0) {
-                singleTrans = updateFunc[i].substring(1).split(",");
-            } else if (i == updateFunc.length-1) {
-                singleTrans = updateFunc[i].substring(0,updateFunc[i].length()-1).split(",");
-            } else {
-                singleTrans = updateFunc[i].split(",");
-            }           
+        if (updateFunc.length == 1) {
+            singleTrans = updateFunc[0].substring(1,updateFunc[0].length()-1).split(",");
             int state = states.get(singleTrans[0]);
             int symbol = inputAlphabet.get(singleTrans[1]);
             int var = variables.get(singleTrans[2]);
             variableUpdate[state][symbol][var] = singleTrans[3];
+        } else {
+            for (int i = 0; i < updateFunc.length; i++) {
+                if (i == 0) {
+                    singleTrans = updateFunc[i].substring(1).split(",");
+                } else if (i == updateFunc.length-1) {
+                     singleTrans = updateFunc[i].substring(0,updateFunc[i].length()-1).split(",");
+                 } else {
+                     singleTrans = updateFunc[i].split(",");
+                }          
+                int state = states.get(singleTrans[0]);
+                int symbol = inputAlphabet.get(singleTrans[1]);
+                int var = variables.get(singleTrans[2]);
+                variableUpdate[state][symbol][var] = singleTrans[3];
+            }
         }
 
         SST sst = new SST(initialState, states, inputAlphabet, outputAlphabet, variables, partialOutput, stateTransition, variableUpdate);
@@ -193,7 +213,7 @@ public class Decoder {
      */
     public Boolean vaildSST(String encoding) {
         // regular expression of SST encoding
-        String pattern = "\\(\\{.*(,.*)*\\}(,\\{.*(,.*)*\\}){2},\\{.(,.)*\\},\\{.*\\},\\{(\\(.*,.*\\))+\\},\\{(\\(.*(,.*){2}\\))+\\},\\{(\\(.*,.*,.,.*\\))+\\}\\)";
+        String pattern = "\\(\\{[A-Za-z0-9]*(,[A-Za-z0-9]*)*\\}(,\\{[A-Za-z0-9]*(,[A-Za-z0-9]*)*\\}){2},\\{[A-Za-z0-9](,[A-Za-z0-9])*\\},\\{[A-Za-z0-9]*\\},\\{\\([A-Za-z0-9]*,[A-Za-z0-9]*\\)(,\\([A-Za-z0-9]*,[A-Za-z0-9]*\\))*\\},\\{\\([A-Za-z0-9]*(,[A-Za-z0-9]*){2}\\)(,\\([A-Za-z0-9]*(,[A-Za-z0-9]*){2}\\))*\\},\\{\\([A-Za-z0-9]*,[A-Za-z0-9]*,[A-Za-z0-9],[A-Za-z0-9]*\\)(,\\([A-Za-z0-9]*,[A-Za-z0-9]*,[A-Za-z0-9],[A-Za-z0-9]*\\))*\\}\\)";
         Boolean validation = encoding.matches(pattern);
         return validation;
     }

@@ -22,7 +22,6 @@ public class SST extends Transducer{
 
     // A finite set of variables of the transducer.
     private HashMap<String, Integer> variables;
-    private HashMap<String, String> variableValue;
 
     // A partial output function of the transducer.
     private String[] partialOutput;
@@ -48,20 +47,21 @@ public class SST extends Transducer{
      */
     public String run(String inputString) {
         // switch to char array
-        char [] stringArray = inputString.toCharArray();
+        char[] stringArray = inputString.toCharArray();
         // current state
         String currState = initialState;
         String output = "";
         int currStateNum;
         int currInputNum;
         int currVarNum;
-        char [] newValueFormula;
-        char [] outputFormula;
+        char[] outputFormula;
+        char[] newValueFormula;
         String newValue;
         String currSymbol;
+        HashMap<String, String> variableValue = new HashMap<String, String>();
 
         for (String variable: variables.keySet()) {
-            variableValue.put(variable, "");
+            variableValue.put(variable, new String(""));
         }
 
         for (int currPosition = 0; currPosition < stringArray.length; currPosition++) {
