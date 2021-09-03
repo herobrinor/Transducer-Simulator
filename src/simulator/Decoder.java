@@ -216,4 +216,24 @@ public class Decoder {
         Boolean validation = encoding.matches(pattern);
         return validation;
     }
+
+    /**
+     * Translate the encoding from 2DFT to SST
+     * @param encoding Encoding of 2DFT
+     * @return Encoding of SST
+     */
+    public String fromTDFTtoSST(String encoding){
+        //TODO: translation function
+        return "";
+    }
+
+    /**
+     * Translate the encoding from SST to 2DFT
+     * @param encoding Encoding of SST
+     * @return Encoding of 2DFT
+     */
+    public String fromSSTtoTDFT(String encoding){
+        //TODO: translation function
+        return "";
+    }
 }
