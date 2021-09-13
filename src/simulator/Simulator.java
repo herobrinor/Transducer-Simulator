@@ -116,6 +116,42 @@ public class Simulator {
                         }
                         break;
                     case 2:
+                        //ask user for model encoding
+                        System.out.println("Please enter the encoding of transducer:");
+                        modelDesc = sc.nextLine();
+                        // while (!decoder.vaildMSOT(modelDesc) && !modelDesc.equals("q")) {
+                        //     System.err.println("Encoding invalid.");
+                        //     System.out.println("Please enter the encoding of MSOT:");
+                        //     modelDesc = sc.nextLine();
+                        // }
+                        if (modelDesc.equals("q")) {
+                            break;
+                        }
+                        MSOT msot;
+                        try {
+                            // initialise a MSOT instance
+                            msot = decoder.decodeMSOT(modelDesc);
+                        } catch (Exception e) {
+                            System.err.println("Construction Error. Please check encoding of MSOT.");
+                            break;
+                        }
+                        
+                        // ask for input string to simulator on this instance
+                        System.out.println("Please enter the input string:");
+                        inputString = sc.nextLine();
+                        while (!inputString.equals("q")) {
+                            if (msot.vaildInput(inputString)) {
+                                String output = msot.run(inputString);
+                                System.out.println("Output:");
+                                System.out.println(output);
+                                System.out.println("Please enter the input string:");
+                                inputString = sc.nextLine();
+                            } else {
+                                System.err.println("Invaild input.");
+                                System.out.println("Please enter the input string:");
+                                inputString = sc.nextLine();
+                            }
+                        }
                         break;
                     case 3:
                         //ask user for model encoding

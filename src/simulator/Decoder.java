@@ -2,6 +2,7 @@ package simulator;
 
 import simulator.transducer.*;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -22,12 +23,12 @@ public class Decoder {
     public TDFT decodeTDFT(String encoding) {
         //split the encoding string into different parts and storing in different arrays or hashmaps
         String[] sets = encoding.split("\\},\\{");
-        String initialState = sets[4];
         String[] statesArray = sets[0].substring(2).split(",");
-        String[] finalStatesArray = sets[5].substring(0,sets[5].length()-2).split(",");
         String[] inAlpha = sets[1].split(",");
         String[] outAlpha = sets[2].split(",");
         String[] tranFunc = sets[3].split("\\),\\(");
+        String initialState = sets[4];
+        String[] finalStatesArray = sets[5].substring(0,sets[5].length()-2).split(",");
         HashMap<String, Integer> states = new HashMap<String, Integer>();
         HashMap<String, Integer> inputAlphabet = new HashMap<String, Integer>();
         HashSet<String> finalStates = new HashSet<String>();
@@ -82,13 +83,52 @@ public class Decoder {
 
     /**
      * Decode function for MSOT
-     * encoding format of MSOT: ({Q},{I},{O},{t:(q,a,b,q,n)},{q},{F})
+     * encoding format of MSOT: ({I},{O},{C},{ϕ{c}(x);},{ϕ{c1,c2}{γ}(x,y);})
      * @param encoding Encoding of MSOT
      * @return An instance of MSOT
      */
-    // public MSOT decodeMSOT(String encoding) {
-    //     TODO:
-    // }
+    public MSOT decodeMSOT(String encoding) {
+        //split the encoding string into different parts and storing in different arrays or hashmaps
+        String[] sets = encoding.split("\\},\\{");
+        String[] inAlpha = sets[0].substring(2).split(",");
+        String[] outAlpha = sets[1].split(",");
+        String[] copySetArray = sets[2].split(",");
+        String[] nodeFormulaArray = sets[3].split(";");
+        String[] edgeFormulaArray = sets[4].substring(0,sets[4].length()-2).split(";");
+        HashMap<String, Integer> inputAlphabet = new HashMap<String, Integer>();
+        HashMap<String, Integer> outputAlphabet = new HashMap<String, Integer>();
+        HashMap<String, Integer> copySet = new HashMap<String, Integer>();
+        String[] nodeFormula = new String[copySetArray.length];
+        String[][][] edgeFormula = new String[copySetArray.length][copySetArray.length][outAlpha.length];
+        for (int i = 0; i < inAlpha.length; i++) {
+            inputAlphabet.put(inAlpha[i],i);
+        }
+        for (int i = 0; i < outAlpha.length; i++) {
+            outputAlphabet.put(outAlpha[i],i);
+        }
+        for (int i = 0; i < copySetArray.length; i++) {
+            copySet.put(copySetArray[i],i);
+        }
+        for (int i = 0; i < nodeFormulaArray.length; i++) {
+            String[] formula = nodeFormulaArray[i].split("=");
+            int copuSetNum = copySet.get(formula[0].substring(2, formula[0].length()-1));
+            nodeFormula[copuSetNum] = formula[1];
+        }
+        for (int i = 0; i < edgeFormulaArray.length; i++) {
+            System.out.println(edgeFormulaArray[i]);
+            String[] formula = edgeFormulaArray[i].split("=");
+            System.out.println(Arrays.toString(formula));
+            String[] numInfo = formula[0].split("\\}\\{");
+            String[] cSet = numInfo[0].split(",");
+            int copuSetNum1 = copySet.get(cSet[0].substring(2));
+            int copuSetNum2 = copySet.get(cSet[1]);
+            int outputNum = outputAlphabet.get(numInfo[1].substring(0,numInfo[1].length()-1));
+            edgeFormula[copuSetNum1][copuSetNum2][outputNum] = formula[1];
+        }
+        //construct an instance of MSOT
+        MSOT transducer = new MSOT(inputAlphabet, outputAlphabet, copySet, nodeFormula, edgeFormula);
+        return transducer;
+    }
 
     /**
      * Check whether the encoding of 2DFT is vaild
