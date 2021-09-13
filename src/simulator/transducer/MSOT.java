@@ -44,7 +44,15 @@ public class MSOT{
                 edgeSet[curr][curr+1] = String.valueOf(stringArray[i]);
             }
         }
-
+        //use node formulas to construct new gragh
+        for (int i = 0; i < nodeFormula.length; i++) {
+            if (nodeFormula[i].contains("∧") || nodeFormula[i].contains("∨")) {
+                
+            } else {
+                
+            }
+        }
+        //use edge formulas to construct new gragh
         Boolean[][] outputNodeSet = new Boolean[copySet.size()][inputString.length()+1];
         String[][] outputEdgeSet = new String[copySet.size()*(inputString.length()+1)][copySet.size()*(inputString.length()+1)];
 
