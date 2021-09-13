@@ -35,9 +35,16 @@ public class MSOT{
      */
     public String run(String inputString) {
         //TODO
-        
+        char [] stringArray = inputString.toCharArray();
         String[][] edgeSet = new String[copySet.size()*(inputString.length()+1)][copySet.size()*(inputString.length()+1)];
-        
+        //construct string representation and its copy
+        for (int i = 0; i < stringArray.length; i++) {
+            for (int j = 0; j < copySet.size(); j++) {
+                int curr = i+j*copySet.size();
+                edgeSet[curr][curr+1] = String.valueOf(stringArray[i]);
+            }
+        }
+
         Boolean[][] outputNodeSet = new Boolean[copySet.size()][inputString.length()+1];
         String[][] outputEdgeSet = new String[copySet.size()*(inputString.length()+1)][copySet.size()*(inputString.length()+1)];
 
