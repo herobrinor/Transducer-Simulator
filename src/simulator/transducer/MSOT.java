@@ -98,27 +98,47 @@ public class MSOT{
     private Boolean evaluateNodeFormula(Node formula, int vertexNum) {
         String data = formula.getData();
         if (data.equals("*")) {
+            return evaluateNodeFormula(formula.getLeftChild(),vertexNum) && evaluateNodeFormula(formula.getRightChild(),vertexNum);
+        } else if (data.equals("+")) {
+            return evaluateNodeFormula(formula.getLeftChild(),vertexNum) || evaluateNodeFormula(formula.getRightChild(),vertexNum);
+        } else if (data.equals("!")) {
+            return !evaluateNodeFormula(formula.getLeftChild(),vertexNum);
+        } else if (data.matches("out\\{.\\}\\(.\\)")) {
+            String symbol = data.substring(4, 5);
+            if (inputEdgeSet[vertexNum][vertexNum+1].equals(symbol)) {
+                return true;
+            } else {
+                return false;
+            }
+        } else if (data.matches("#.")) {
+            return evaluateNodeFormulaExist(formula.getLeftChild(),vertexNum,data.substring(1, 2));
+        } else if (data.matches("$.")) {
+            return evaluateNodeFormulaForall(formula.getLeftChild(),vertexNum,data.substring(1, 2));
+        }
+        return false;
+    }
+
+    private Boolean evaluateNodeFormulaExist(Node formula, int vertexNum, String variable) {
+        return false;
+    }
+
+    private Boolean evaluateNodeFormulaForall(Node formula, int vertexNum, String variable) {
+        return false;
+    }
+
+    private Boolean evaluateEdgeFormula(Node formula, int vertex1Num, int vertex2Num) {
+        String data = formula.getData();
+        if (data.equals("*")) {
             return formula.getLeftChild().evaluate() && formula.getRightChild().evaluate();
         } else if (data.equals("+")) {
             return formula.getLeftChild().evaluate() || formula.getRightChild().evaluate();
         } else if (data.equals("!")) {
             return !formula.getLeftChild().evaluate();
-        } else if (data.matches("out\\{.\\}\\(.\\)")) {
-            String symbol = data.substring(4, 5);
-            Boolean result = false;
-            for (String outedge : inputEdgeSet[vertexNum]) {
-                if (outedge.equals(symbol)) {
-                    result = true;
-                }
-            }
-            return result;
         } else if (data.matches("edge\\{.\\}\\(.,.\\)")) {
 
         } else if (data.matches("next\\{.\\}\\(.,.\\)")) {
 
         } else if (data.matches("fps\\{.\\}\\(.,.\\)")) {
-
-        } else if (data.matches("ϕ\\{.*\\}\\(.\\)")) {
 
         } else if (data.matches("ϕ\\{.*,.*\\}\\{.\\}\\(.\\)")) {
 
