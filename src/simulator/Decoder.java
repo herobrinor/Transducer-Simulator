@@ -1,6 +1,7 @@
 package simulator;
 
 import simulator.transducer.*;
+import simulator.util.ParseTree;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -98,8 +99,8 @@ public class Decoder {
         HashMap<String, Integer> inputAlphabet = new HashMap<String, Integer>();
         HashMap<String, Integer> outputAlphabet = new HashMap<String, Integer>();
         HashMap<String, Integer> copySet = new HashMap<String, Integer>();
-        String[] nodeFormula = new String[copySetArray.length];
-        String[][][] edgeFormula = new String[copySetArray.length][copySetArray.length][outAlpha.length];
+        ParseTree[] nodeFormula = new ParseTree[copySetArray.length];
+        ParseTree[][][] edgeFormula = new ParseTree[copySetArray.length][copySetArray.length][outAlpha.length];
         for (int i = 0; i < inAlpha.length; i++) {
             inputAlphabet.put(inAlpha[i],i);
         }
@@ -112,7 +113,7 @@ public class Decoder {
         for (int i = 0; i < nodeFormulaArray.length; i++) {
             String[] formula = nodeFormulaArray[i].split("=");
             int copuSetNum = copySet.get(formula[0].substring(2, formula[0].length()-1));
-            nodeFormula[copuSetNum] = formula[1];
+            nodeFormula[copuSetNum] = new ParseTree(formula[1]);
         }
         for (int i = 0; i < edgeFormulaArray.length; i++) {
             System.out.println(edgeFormulaArray[i]);
@@ -123,7 +124,7 @@ public class Decoder {
             int copuSetNum1 = copySet.get(cSet[0].substring(2));
             int copuSetNum2 = copySet.get(cSet[1]);
             int outputNum = outputAlphabet.get(numInfo[1].substring(0,numInfo[1].length()-1));
-            edgeFormula[copuSetNum1][copuSetNum2][outputNum] = formula[1];
+            edgeFormula[copuSetNum1][copuSetNum2][outputNum] = new ParseTree(formula[1]);
         }
         //construct an instance of MSOT
         MSOT transducer = new MSOT(inputAlphabet, outputAlphabet, copySet, nodeFormula, edgeFormula);
@@ -265,51 +266,51 @@ public class Decoder {
     public String fromTDFTtoSST(String encoding){
         //TODO: translation function
         //split the encoding string into different parts and storing in different arrays or hashmaps
-        String[] sets = encoding.split("\\},\\{");
-        String[] statesArray = sets[0].substring(2).split(",");
-        String[] inAlpha = sets[1].split(",");
-        String[] outAlpha = sets[2].split(",");
-        String[] tranFunc = sets[3].split("\\),\\(");
-        String initialState = sets[4];
-        String[] finalStatesArray = sets[5].substring(0,sets[5].length()-2).split(",");
+        // String[] sets = encoding.split("\\},\\{");
+        // String[] statesArray = sets[0].substring(2).split(",");
+        // String[] inAlpha = sets[1].split(",");
+        // String[] outAlpha = sets[2].split(",");
+        // String[] tranFunc = sets[3].split("\\),\\(");
+        // String initialState = sets[4];
+        // String[] finalStatesArray = sets[5].substring(0,sets[5].length()-2).split(",");
 
-        HashMap<String, Integer> states = new HashMap<String, Integer>();
-        HashMap<String, Integer> inputAlphabet = new HashMap<String, Integer>();
-        HashSet<String> finalStates = new HashSet<String>();
-        HashSet<String> outputAlphabet = new HashSet<String>();
-        for (int i = 0; i < statesArray.length; i++) {
-            states.put(statesArray[i],i);
-        }
-        for (int i = 0; i < inAlpha.length; i++) {
-            inputAlphabet.put(inAlpha[i],i);
-        }
-        for (int i = 0; i < outAlpha.length; i++) {
-            outputAlphabet.add(outAlpha[i]);
-        }
-        for (int i = 0; i < finalStatesArray.length; i++) {
-            finalStates.add(finalStatesArray[i]);
-        }
-        inputAlphabet.put("^",inAlpha.length);
-        inputAlphabet.put("&",inAlpha.length+1);
-        //store transition function
-        Object[][][] transition = new Object[statesArray.length][inAlpha.length+2][3];
-        String[] singleTrans;
-        for (int i = 0; i < tranFunc.length; i++) {
-            if (i == 0) {
-                singleTrans = tranFunc[i].substring(1).split(",");
-            } else if (i == tranFunc.length-1) {
-                singleTrans = tranFunc[i].substring(0,tranFunc[i].length()-1).split(",");
-            } else {
-                singleTrans = tranFunc[i].split(",");
-            }           
-            int state = states.get(singleTrans[0]);
-            int symbol = inputAlphabet.get(singleTrans[1]);
-            transition[state][symbol][0] = singleTrans[2];
-            transition[state][symbol][1] = singleTrans[3];
-            transition[state][symbol][2] = Integer.parseInt(singleTrans[4]);
-        }
+        // HashMap<String, Integer> states = new HashMap<String, Integer>();
+        // HashMap<String, Integer> inputAlphabet = new HashMap<String, Integer>();
+        // HashSet<String> finalStates = new HashSet<String>();
+        // HashSet<String> outputAlphabet = new HashSet<String>();
+        // for (int i = 0; i < statesArray.length; i++) {
+        //     states.put(statesArray[i],i);
+        // }
+        // for (int i = 0; i < inAlpha.length; i++) {
+        //     inputAlphabet.put(inAlpha[i],i);
+        // }
+        // for (int i = 0; i < outAlpha.length; i++) {
+        //     outputAlphabet.add(outAlpha[i]);
+        // }
+        // for (int i = 0; i < finalStatesArray.length; i++) {
+        //     finalStates.add(finalStatesArray[i]);
+        // }
+        // inputAlphabet.put("^",inAlpha.length);
+        // inputAlphabet.put("&",inAlpha.length+1);
+        // //store transition function
+        // Object[][][] transition = new Object[statesArray.length][inAlpha.length+2][3];
+        // String[] singleTrans;
+        // for (int i = 0; i < tranFunc.length; i++) {
+        //     if (i == 0) {
+        //         singleTrans = tranFunc[i].substring(1).split(",");
+        //     } else if (i == tranFunc.length-1) {
+        //         singleTrans = tranFunc[i].substring(0,tranFunc[i].length()-1).split(",");
+        //     } else {
+        //         singleTrans = tranFunc[i].split(",");
+        //     }           
+        //     int state = states.get(singleTrans[0]);
+        //     int symbol = inputAlphabet.get(singleTrans[1]);
+        //     transition[state][symbol][0] = singleTrans[2];
+        //     transition[state][symbol][1] = singleTrans[3];
+        //     transition[state][symbol][2] = Integer.parseInt(singleTrans[4]);
+        // }
 
-        String[][] returnInfo = new String[statesArray.length][1];
+        // String[][] returnInfo = new String[statesArray.length][1];
         return "";
     }
 
