@@ -1,7 +1,7 @@
 package simulator.transducer;
 
 import java.util.HashMap;
-import simulator.util.ParseTree;
+import simulator.util.Node;
 
 /**
  * Deterministic MSO transducers (MSOT)
@@ -17,11 +17,11 @@ public class MSOT{
     private HashMap<String, Integer> inputAlphabet;
     private HashMap<String, Integer> outputAlphabet;
     private HashMap<String, Integer> copySet;
-    private ParseTree[] nodeFormula;
-    private ParseTree[][][] edgeFormula;
+    private Node[] nodeFormula;
+    private Node[][][] edgeFormula;
     private String[][] inputEdgeSet;
 
-    public MSOT(HashMap<String, Integer> inputAlphabet, HashMap<String, Integer> outputAlphabet, HashMap<String, Integer> copySet, ParseTree[] nodeFormula, ParseTree[][][] edgeFormula){
+    public MSOT(HashMap<String, Integer> inputAlphabet, HashMap<String, Integer> outputAlphabet, HashMap<String, Integer> copySet, Node[] nodeFormula, Node[][][] edgeFormula){
         this.inputAlphabet = inputAlphabet;
         this.outputAlphabet = outputAlphabet;
         this.copySet = copySet;
@@ -49,13 +49,21 @@ public class MSOT{
         }
         //use node formulas to construct new gragh
         for (int i = 0; i < nodeFormula.length; i++) {
-            for (int j = 0; j < inputString.length()+1; j++) {
-                if (evaluateNode(i,j)) {
-                    outputNodeSet[i][j] = true;
-                } else {
+            if (nodeFormula[i].equals(null)) {
+                for (int j = 0; j < inputString.length()+1; j++) {
                     outputNodeSet[i][j] = false;
                 }
+            } else {
+                Node root = nodeFormula[i];
+                for (int j = 0; j < inputString.length()+1; j++) {
+                    if (evaluateNodeFormula(root,i*(inputString.length()+1)+j)) {
+                        outputNodeSet[i][j] = true;
+                    } else {
+                        outputNodeSet[i][j] = false;
+                    }
+                }
             }
+            
         } 
 
         //use edge formulas to construct new gragh
@@ -87,9 +95,34 @@ public class MSOT{
         return validation;
     }
 
-    private Boolean evaluateNode(int copyNum,int nodeNum) {
-        ParseTree formula = nodeFormula[copyNum];
+    private Boolean evaluateNodeFormula(Node formula, int vertexNum) {
+        String data = formula.getData();
+        if (data.equals("*")) {
+            return formula.getLeftChild().evaluate() && formula.getRightChild().evaluate();
+        } else if (data.equals("+")) {
+            return formula.getLeftChild().evaluate() || formula.getRightChild().evaluate();
+        } else if (data.equals("!")) {
+            return !formula.getLeftChild().evaluate();
+        } else if (data.matches("out\\{.\\}\\(.\\)")) {
+            String symbol = data.substring(4, 5);
+            Boolean result = false;
+            for (String outedge : inputEdgeSet[vertexNum]) {
+                if (outedge.equals(symbol)) {
+                    result = true;
+                }
+            }
+            return result;
+        } else if (data.matches("edge\\{.\\}\\(.,.\\)")) {
 
+        } else if (data.matches("next\\{.\\}\\(.,.\\)")) {
+
+        } else if (data.matches("fps\\{.\\}\\(.,.\\)")) {
+
+        } else if (data.matches("ϕ\\{.*\\}\\(.\\)")) {
+
+        } else if (data.matches("ϕ\\{.*,.*\\}\\{.\\}\\(.\\)")) {
+
+        }
         return false;
     }
 }

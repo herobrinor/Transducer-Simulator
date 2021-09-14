@@ -1,23 +1,9 @@
 package simulator.util;
 
-public class ParseTree {
-    private Node root;
-
-    public ParseTree(String input) {
-        Node root = new Node(input);
-        root.parse();
-        this.root = root;
-    }
-
-    public Node getRoot() {
-        return root;
-    }
-}
-
 /**
- * Tree Node
+ * Parse Tree Node
  */
-class Node {
+public class Node {
     private String data;
     private Node leftChild;
     private Node rightChild;
@@ -47,7 +33,7 @@ class Node {
     public Node getRightChild() {
         return rightChild;
     }
-    
+
     public void parse() {
         char[] formula = this.data.toCharArray();
         // number of encountered left parenthesis

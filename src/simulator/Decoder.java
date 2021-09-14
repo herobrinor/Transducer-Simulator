@@ -1,7 +1,7 @@
 package simulator;
 
 import simulator.transducer.*;
-import simulator.util.ParseTree;
+import simulator.util.Node;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -99,8 +99,8 @@ public class Decoder {
         HashMap<String, Integer> inputAlphabet = new HashMap<String, Integer>();
         HashMap<String, Integer> outputAlphabet = new HashMap<String, Integer>();
         HashMap<String, Integer> copySet = new HashMap<String, Integer>();
-        ParseTree[] nodeFormula = new ParseTree[copySetArray.length];
-        ParseTree[][][] edgeFormula = new ParseTree[copySetArray.length][copySetArray.length][outAlpha.length];
+        Node[] nodeFormula = new Node[copySetArray.length];
+        Node[][][] edgeFormula = new Node[copySetArray.length][copySetArray.length][outAlpha.length];
         for (int i = 0; i < inAlpha.length; i++) {
             inputAlphabet.put(inAlpha[i],i);
         }
@@ -113,7 +113,9 @@ public class Decoder {
         for (int i = 0; i < nodeFormulaArray.length; i++) {
             String[] formula = nodeFormulaArray[i].split("=");
             int copuSetNum = copySet.get(formula[0].substring(2, formula[0].length()-1));
-            nodeFormula[copuSetNum] = new ParseTree(formula[1]);
+            Node root = new Node(formula[1]);
+            root.parse();
+            nodeFormula[copuSetNum] = root;
         }
         for (int i = 0; i < edgeFormulaArray.length; i++) {
             System.out.println(edgeFormulaArray[i]);
@@ -124,7 +126,9 @@ public class Decoder {
             int copuSetNum1 = copySet.get(cSet[0].substring(2));
             int copuSetNum2 = copySet.get(cSet[1]);
             int outputNum = outputAlphabet.get(numInfo[1].substring(0,numInfo[1].length()-1));
-            edgeFormula[copuSetNum1][copuSetNum2][outputNum] = new ParseTree(formula[1]);
+            Node root = new Node(formula[1]);
+            root.parse();
+            edgeFormula[copuSetNum1][copuSetNum2][outputNum] = root;
         }
         //construct an instance of MSOT
         MSOT transducer = new MSOT(inputAlphabet, outputAlphabet, copySet, nodeFormula, edgeFormula);
