@@ -56,7 +56,7 @@ public class MSOT{
             } else {
                 Node root = nodeFormula[i];
                 for (int j = 0; j < inputString.length()+1; j++) {
-                    if (evaluateNodeFormula(root,i*(inputString.length()+1)+j)) {
+                    if (evaluateNodeFormula(root,inputString.length()+1,i*(inputString.length()+1)+j)) {
                         outputNodeSet[i][j] = true;
                     } else {
                         outputNodeSet[i][j] = false;
@@ -95,15 +95,18 @@ public class MSOT{
         return validation;
     }
 
-    private Boolean evaluateNodeFormula(Node formula, int vertexNum) {
+    private Boolean evaluateNodeFormula(Node formula, int inputLength, int vertexNum) {
         String data = formula.getData();
         if (data.equals("*")) {
-            return evaluateNodeFormula(formula.getLeftChild(),vertexNum) && evaluateNodeFormula(formula.getRightChild(),vertexNum);
+            return evaluateNodeFormula(formula.getLeftChild(),inputLength,vertexNum) && evaluateNodeFormula(formula.getRightChild(),inputLength,vertexNum);
         } else if (data.equals("+")) {
-            return evaluateNodeFormula(formula.getLeftChild(),vertexNum) || evaluateNodeFormula(formula.getRightChild(),vertexNum);
+            return evaluateNodeFormula(formula.getLeftChild(),inputLength,vertexNum) || evaluateNodeFormula(formula.getRightChild(),inputLength,vertexNum);
         } else if (data.equals("!")) {
-            return !evaluateNodeFormula(formula.getLeftChild(),vertexNum);
+            return !evaluateNodeFormula(formula.getLeftChild(),inputLength,vertexNum);
         } else if (data.matches("out\\{.\\}\\(.\\)")) {
+            if (vertexNum == inputEdgeSet[0].length-1) {
+                return false;
+            }
             String symbol = data.substring(4, 5);
             if (inputEdgeSet[vertexNum][vertexNum+1].equals(symbol)) {
                 return true;
@@ -111,18 +114,44 @@ public class MSOT{
                 return false;
             }
         } else if (data.matches("#.")) {
-            return evaluateNodeFormulaExist(formula.getLeftChild(),vertexNum,data.substring(1, 2));
+            for (int i = (vertexNum/inputLength)*inputLength; i < ((vertexNum/inputLength)+1)*inputLength; i++) {
+                if (evaluateNodeFormulaBound(formula.getLeftChild(),vertexNum,data.substring(1, 2)))    {
+                    return true;
+                }
+            }
+            return false;
         } else if (data.matches("$.")) {
-            return evaluateNodeFormulaForall(formula.getLeftChild(),vertexNum,data.substring(1, 2));
+            for (int i = (vertexNum/inputLength)*inputLength; i < ((vertexNum/inputLength)+1)*inputLength; i++) {
+                if (!evaluateNodeFormulaBound(formula.getLeftChild(),vertexNum,data.substring(1, 2)))    {
+                    return false;
+                }
+            }
+            return true;
         }
         return false;
     }
 
-    private Boolean evaluateNodeFormulaExist(Node formula, int vertexNum, String variable) {
-        return false;
-    }
-
-    private Boolean evaluateNodeFormulaForall(Node formula, int vertexNum, String variable) {
+    private Boolean evaluateNodeFormulaBound(Node formula, int vertexNum, String boundVar) {
+        String data = formula.getData();
+        if (data.equals("*")) {
+            return evaluateNodeFormulaBound(formula.getLeftChild(),vertexNum,boundVar) && evaluateNodeFormulaBound(formula.getRightChild(),vertexNum,boundVar);
+        } else if (data.equals("+")) {
+            return evaluateNodeFormulaBound(formula.getLeftChild(),vertexNum,boundVar) || evaluateNodeFormulaBound(formula.getRightChild(),vertexNum,boundVar);
+        } else if (data.equals("!")) {
+            return !evaluateNodeFormulaBound(formula.getLeftChild(),vertexNum,boundVar);
+        } else if (data.matches("out\\{.\\}\\(.\\)")) {
+            if (vertexNum == inputEdgeSet[0].length-1) {
+                return false;
+            }
+            String symbol = data.substring(4, 5);
+            if (inputEdgeSet[vertexNum][vertexNum+1].equals(symbol)) {
+                return true;
+            } else {
+                return false;
+            }
+        } else if (data.matches(".<.")) {
+            return false;
+        }
         return false;
     }
 
