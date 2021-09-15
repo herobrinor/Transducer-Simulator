@@ -1,7 +1,7 @@
 package simulator.transducer;
+import simulator.util.Node;
 
 import java.util.HashMap;
-import simulator.util.Node;
 
 /**
  * Deterministic MSO transducers (MSOT)
@@ -77,7 +77,7 @@ public class MSOT{
                         Node root = edgeFormula[i][j][outputNum];
                         for (int k = 0; k < inputString.length()+1; k++) {
                             for (int l = 0; l < inputString.length()+1; l++) {
-                                if (evaluateNodeFormula(root,i*(inputString.length()+1)+k,j*(inputString.length()+1)+l)) {
+                                if (evaluateEdgeFormula(root,inputString.length()+1,i*(inputString.length()+1)+k,j*(inputString.length()+1)+l)) {
                                     outputEdgeSet[i*(inputString.length()+1)+k][j*(inputString.length()+1)+l] = outputSymbol;
                                 }
                             }
@@ -183,7 +183,7 @@ public class MSOT{
         } else if (data.equals("!")) {
             return !evaluateNodeFormula(formula.getLeftChild(),inputLength,vertexNum);
         } else if (data.matches("out\\{.\\}\\(.\\)")) {
-            if (vertexNum == inputEdgeSet[0].length-1) {
+            if (vertexNum%inputLength == inputLength-1) {
                 return false;
             }
             String symbol = data.substring(4, 5);
@@ -275,22 +275,251 @@ public class MSOT{
         return false;
     }
 
-    private Boolean evaluateEdgeFormula(Node formula, int vertex1Num, int vertex2Num) {
+    private Boolean evaluateEdgeFormula(Node formula, int inputLength, int vertex1Num, int vertex2Num) {
         String data = formula.getData();
         if (data.equals("*")) {
-            return formula.getLeftChild().evaluate() && formula.getRightChild().evaluate();
+            return evaluateEdgeFormula(formula.getLeftChild(),inputLength,vertex1Num,vertex2Num) && evaluateEdgeFormula(formula.getRightChild(),inputLength,vertex1Num,vertex2Num);
         } else if (data.equals("+")) {
-            return formula.getLeftChild().evaluate() || formula.getRightChild().evaluate();
+            return evaluateEdgeFormula(formula.getLeftChild(),inputLength,vertex1Num,vertex2Num) || evaluateEdgeFormula(formula.getRightChild(),inputLength,vertex1Num,vertex2Num);
         } else if (data.equals("!")) {
-            return !formula.getLeftChild().evaluate();
+            return !evaluateEdgeFormula(formula.getLeftChild(),inputLength,vertex1Num,vertex2Num);
+        } else if (data.matches("edge\\{.\\}\\([xy],[xy]\\)")) {
+            if (data.substring(8, 9).equals("x") && data.substring(10, 11).equals("y")) {
+                if (vertex1Num+1 == vertex2Num && vertex1Num%inputLength != inputLength-1) {
+                    String symbol = data.substring(5, 6);
+                    if (inputEdgeSet[vertex1Num][vertex2Num].equals(symbol)) {
+                        return true;
+                    }
+                    return false;
+                }
+                return false;
+            } else if (data.substring(8, 9).equals("y") && data.substring(10, 11).equals("x")) {
+                if (vertex2Num+1 == vertex1Num && vertex2Num%inputLength != inputLength-1) {
+                    String symbol = data.substring(5, 6);
+                    if (inputEdgeSet[vertex2Num][vertex1Num].equals(symbol)) {
+                        return true;
+                    }
+                    return false;
+                }
+                return false;
+            }
+            return false;
+        } else if (data.matches("out\\{.\\}\\([xy]\\)")) {
+            if (data.substring(7, 8).equals("x")) {
+                if (vertex1Num%inputLength == inputLength-1) {
+                    return false;
+                }
+                String symbol = data.substring(4, 5);
+                if (inputEdgeSet[vertex1Num][vertex1Num+1].equals(symbol)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else if (data.substring(7, 8).equals("y")) {
+                if (vertex2Num%inputLength == inputLength-1) {
+                    return false;
+                }
+                String symbol = data.substring(4, 5);
+                if (inputEdgeSet[vertex2Num][vertex2Num+1].equals(symbol)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            
+        } else if (data.matches("next\\{.\\}\\([xy],[xy]\\)")) {
+            String symbol = data.substring(5, 6);
+            if (data.substring(8, 9).equals("x") && data.substring(10, 11).equals("y")) {
+                int currCopyNum = vertex1Num/inputLength;
+                int currVertex = vertex1Num;
+                while (currVertex < (currCopyNum+1)*inputLength-1 && !inputEdgeSet[currVertex][currVertex+1].equals(symbol) ) {
+                    currVertex += 1;
+                }
+                if (vertex2Num%inputLength == currVertex%inputLength) {
+                    return true;
+                }
+                return false;
+            } else if (data.substring(8, 9).equals("y") && data.substring(10, 11).equals("x")) {
+                int currCopyNum = vertex2Num/inputLength;
+                int currVertex = vertex2Num;
+                while (currVertex < (currCopyNum+1)*inputLength-1 && !inputEdgeSet[currVertex][currVertex+1].equals(symbol) ) {
+                    currVertex += 1;
+                }
+                if (vertex1Num%inputLength == currVertex%inputLength) {
+                    return true;
+                }
+                return false;
+            }
+            return false;
+        } else if (data.matches("fps\\{.\\}\\([xy],[xy]\\)")) {
+            String symbol = data.substring(4, 5);
+            if (data.substring(7, 8).equals("x") && data.substring(9, 10).equals("y")) {
+                int currCopyNum = vertex1Num/inputLength;
+                int currVertex = vertex1Num;
+                while (currVertex > currCopyNum*inputLength && inputEdgeSet[currVertex-1][currVertex].equals(symbol) ) {
+                    currVertex -= 1;
+                }
+                if (vertex2Num%inputLength == currVertex%inputLength) {
+                    return true;
+                }
+                return false;
+            } else if (data.substring(7, 8).equals("y") && data.substring(9, 10).equals("x")) {
+                int currCopyNum = vertex2Num/inputLength;
+                int currVertex = vertex2Num;
+                while (currVertex > currCopyNum*inputLength && inputEdgeSet[currVertex-1][currVertex].equals(symbol) ) {
+                    currVertex -= 1;
+                }
+                if (vertex1Num%inputLength == currVertex%inputLength) {
+                    return true;
+                }
+                return false;
+            }
+            return false;
+        } else if (data.matches("ϕ\\{.*,.*\\}\\{.\\}\\([xy],[xy]\\)")) {
+            String[] formulaString = data.split(",|\\}\\{");
+            int copy1Num = copySet.get(formulaString[0].substring(2));
+            int copy2Num = copySet.get(formulaString[1]);
+            int outputNum = outputAlphabet.get(formulaString[2].substring(0, 1));
+            String var1 = formulaString[2].substring(3, 4);
+            String var2 = formulaString[3].substring(0, 1);
+            if (var1.equals("x") && var2.equals("y")) {
+                return evaluateEdgeFormula(edgeFormula[copy1Num][copy2Num][outputNum],inputLength,vertex1Num,vertex2Num);
+            } else if (var1.equals("y") && var2.equals("x")) {
+                return evaluateEdgeFormula(edgeFormula[copy1Num][copy2Num][outputNum],inputLength,vertex2Num,vertex1Num);
+            }
+            return false;
+        } else if (data.matches("#.")) {
+            for (int i = 0; i < edgeFormula.length; i++) {
+                if (evaluateEdgeFormulaBound(formula.getLeftChild(),inputLength,vertex1Num,vertex2Num,data.substring(1, 2),i))    {
+                    return true;
+                }
+            }
+            return false;
+        } else if (data.matches("$.")) {
+            for (int i = 0; i < edgeFormula.length; i++) {
+                if (!evaluateEdgeFormulaBound(formula.getLeftChild(),inputLength,vertex1Num,vertex2Num,data.substring(1, 2),i))    {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private Boolean evaluateEdgeFormulaBound(Node formula, int inputLength, int vertex1Num, int vertex2Num, String boundVar, int boundVertexNum) {
+        String data = formula.getData();
+        if (data.equals("*")) {
+            return evaluateEdgeFormulaBound(formula.getLeftChild(),inputLength,vertex1Num,vertex2Num,boundVar,boundVertexNum) && evaluateEdgeFormulaBound(formula.getRightChild(),inputLength,vertex1Num,vertex2Num,boundVar,boundVertexNum);
+        } else if (data.equals("+")) {
+            return evaluateEdgeFormulaBound(formula.getLeftChild(),inputLength,vertex1Num,vertex2Num,boundVar,boundVertexNum) || evaluateEdgeFormulaBound(formula.getRightChild(),inputLength,vertex1Num,vertex2Num,boundVar,boundVertexNum);
+        } else if (data.equals("!")) {
+            return !evaluateEdgeFormulaBound(formula.getLeftChild(),inputLength,vertex1Num,vertex2Num,boundVar,boundVertexNum);
         } else if (data.matches("edge\\{.\\}\\(.,.\\)")) {
-
+            //TODO: change
+            if (data.substring(8, 9).equals("x") && data.substring(10, 11).equals("y")) {
+                if (vertex1Num+1 == vertex2Num && vertex1Num%inputLength != inputLength-1) {
+                    String symbol = data.substring(5, 6);
+                    if (inputEdgeSet[vertex1Num][vertex2Num].equals(symbol)) {
+                        return true;
+                    }
+                    return false;
+                }
+                return false;
+            } else if (data.substring(8, 9).equals("y") && data.substring(10, 11).equals("x")) {
+                if (vertex2Num+1 == vertex1Num && vertex2Num%inputLength != inputLength-1) {
+                    String symbol = data.substring(5, 6);
+                    if (inputEdgeSet[vertex2Num][vertex1Num].equals(symbol)) {
+                        return true;
+                    }
+                    return false;
+                }
+                return false;
+            }
+            return false;
+        } else if (data.matches("out\\{.\\}\\(.\\)")) {
+            if (data.substring(7, 8).equals("x")) {
+                if (vertex1Num%inputLength == inputLength-1) {
+                    return false;
+                }
+                String symbol = data.substring(4, 5);
+                if (inputEdgeSet[vertex1Num][vertex1Num+1].equals(symbol)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else if (data.substring(7, 8).equals("y")) {
+                if (vertex2Num%inputLength == inputLength-1) {
+                    return false;
+                }
+                String symbol = data.substring(4, 5);
+                if (inputEdgeSet[vertex2Num][vertex2Num+1].equals(symbol)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            
         } else if (data.matches("next\\{.\\}\\(.,.\\)")) {
-
+            String symbol = data.substring(5, 6);
+            if (data.substring(8, 9).equals("x") && data.substring(10, 11).equals("y")) {
+                int currCopyNum = vertex1Num/inputLength;
+                int currVertex = vertex1Num;
+                while (currVertex < (currCopyNum+1)*inputLength-1 && !inputEdgeSet[currVertex][currVertex+1].equals(symbol) ) {
+                    currVertex += 1;
+                }
+                if (vertex2Num%inputLength == currVertex%inputLength) {
+                    return true;
+                }
+                return false;
+            } else if (data.substring(8, 9).equals("y") && data.substring(10, 11).equals("x")) {
+                int currCopyNum = vertex2Num/inputLength;
+                int currVertex = vertex2Num;
+                while (currVertex < (currCopyNum+1)*inputLength-1 && !inputEdgeSet[currVertex][currVertex+1].equals(symbol) ) {
+                    currVertex += 1;
+                }
+                if (vertex1Num%inputLength == currVertex%inputLength) {
+                    return true;
+                }
+                return false;
+            }
+            return false;
         } else if (data.matches("fps\\{.\\}\\(.,.\\)")) {
-
-        } else if (data.matches("ϕ\\{.*,.*\\}\\{.\\}\\(.\\)")) {
-
+            String symbol = data.substring(4, 5);
+            if (data.substring(7, 8).equals("x") && data.substring(9, 10).equals("y")) {
+                int currCopyNum = vertex1Num/inputLength;
+                int currVertex = vertex1Num;
+                while (currVertex > currCopyNum*inputLength && inputEdgeSet[currVertex-1][currVertex].equals(symbol) ) {
+                    currVertex -= 1;
+                }
+                if (vertex2Num%inputLength == currVertex%inputLength) {
+                    return true;
+                }
+                return false;
+            } else if (data.substring(7, 8).equals("y") && data.substring(9, 10).equals("x")) {
+                int currCopyNum = vertex2Num/inputLength;
+                int currVertex = vertex2Num;
+                while (currVertex > currCopyNum*inputLength && inputEdgeSet[currVertex-1][currVertex].equals(symbol) ) {
+                    currVertex -= 1;
+                }
+                if (vertex1Num%inputLength == currVertex%inputLength) {
+                    return true;
+                }
+                return false;
+            }
+            return false;
+        } else if (data.matches("ϕ\\{.*,.*\\}\\{.\\}\\(.,.\\)")) {
+            String[] formulaString = data.split(",|\\}\\{");
+            int copy1Num = copySet.get(formulaString[0].substring(2));
+            int copy2Num = copySet.get(formulaString[1]);
+            int outputNum = outputAlphabet.get(formulaString[2].substring(0, 1));
+            String var1 = formulaString[2].substring(3, 4);
+            String var2 = formulaString[3].substring(0, 1);
+            if (var1.equals("x") && var2.equals("y")) {
+                return evaluateEdgeFormula(edgeFormula[copy1Num][copy2Num][outputNum],inputLength,vertex1Num,vertex2Num);
+            } else if (var1.equals("y") && var2.equals("x")) {
+                return evaluateEdgeFormula(edgeFormula[copy1Num][copy2Num][outputNum],inputLength,vertex2Num,vertex1Num);
+            }
+            return false;
         }
         return false;
     }
