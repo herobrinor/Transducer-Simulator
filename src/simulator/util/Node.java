@@ -1,5 +1,7 @@
 package simulator.util;
 
+import java.util.Arrays;
+
 /**
  * Parse Tree Node
  */
@@ -56,39 +58,24 @@ public class Node {
                     this.rightChild = right;
                     leftChild.parse();
                     rightChild.parse();
+                    break;
                 } else if (formula[i] == '!') {
                     Node left = new Node(this.data.substring(1));
                     this.data = "!";
                     this.leftChild = left;
                     leftChild.parse();
+                    break;
                 } else if (formula[i] == '#' || formula[i] == '$') {
-                    Node left = new Node(this.data.substring(3,this.data.length()-1));
+                    int last1 = this.data.length()-1;
+                    Node left = new Node(this.data.substring(3,last1));
                     this.data = this.data.substring(0,2);
                     this.leftChild = left;
                     leftChild.parse();
+                    break;
+                } else {
+                    break;
                 }
             }
         }
-    }
-
-    public Boolean evaluate() {
-        if (this.data.equals("*")) {
-            return leftChild.evaluate() && rightChild.evaluate();
-        } else if (this.data.equals("+")) {
-            return leftChild.evaluate() || rightChild.evaluate();
-        } else if (this.data.matches("out\\{.\\}\\(.\\)")) {
-
-        } else if (this.data.matches("edge\\{.\\}\\(.,.\\)")) {
-
-        } else if (this.data.matches("next\\{.\\}\\(.,.\\)")) {
-
-        } else if (this.data.matches("fps\\{.\\}\\(.,.\\)")) {
-
-        } else if (this.data.matches("ϕ\\{.*\\}\\(.\\)")) {
-
-        } else if (this.data.matches("ϕ\\{.*,.*\\}\\{.\\}\\(.\\)")) {
-
-        }
-        return false;
     }
 }

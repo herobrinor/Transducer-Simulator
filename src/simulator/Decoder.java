@@ -118,9 +118,7 @@ public class Decoder {
             nodeFormula[copuSetNum] = root;
         }
         for (int i = 0; i < edgeFormulaArray.length; i++) {
-            System.out.println(edgeFormulaArray[i]);
             String[] formula = edgeFormulaArray[i].split("=");
-            System.out.println(Arrays.toString(formula));
             String[] numInfo = formula[0].split("\\}\\{");
             String[] cSet = numInfo[0].split(",");
             int copuSetNum1 = copySet.get(cSet[0].substring(2));
