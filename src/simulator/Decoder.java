@@ -3,7 +3,6 @@ package simulator;
 import simulator.transducer.*;
 import simulator.util.Node;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 

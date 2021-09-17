@@ -1,7 +1,5 @@
 package simulator.util;
 
-import java.util.Arrays;
-
 /**
  * Parse Tree Node
  */
