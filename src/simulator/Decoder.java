@@ -226,7 +226,11 @@ public class Decoder {
             int state = states.get(singleTrans[0]);
             int symbol = inputAlphabet.get(singleTrans[1]);
             int var = variables.get(singleTrans[2]);
-            variableUpdate[state][symbol][var] = singleTrans[3];
+            if (singleTrans.length == 3) {
+                variableUpdate[state][symbol][var] = "";
+            } else {
+                variableUpdate[state][symbol][var] = singleTrans[3];
+            }
         } else {
             for (int i = 0; i < updateFunc.length; i++) {
                 if (i == 0) {
@@ -239,7 +243,11 @@ public class Decoder {
                 int state = states.get(singleTrans[0]);
                 int symbol = inputAlphabet.get(singleTrans[1]);
                 int var = variables.get(singleTrans[2]);
-                variableUpdate[state][symbol][var] = singleTrans[3];
+                if (singleTrans.length == 3) {
+                    variableUpdate[state][symbol][var] = "";
+                } else {
+                    variableUpdate[state][symbol][var] = singleTrans[3];
+                }
             }
         }
 
