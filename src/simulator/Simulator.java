@@ -170,6 +170,7 @@ public class Simulator {
                             // initialise a SST instance
                             sst = decoder.decodeSST(modelDesc);
                         } catch (Exception e) {
+                            e.printStackTrace();
                             System.err.println(e.getMessage());
                             System.err.println("Construction Error. Please check encoding of SST.");
                             break;
