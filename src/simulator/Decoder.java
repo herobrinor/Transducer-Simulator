@@ -149,8 +149,9 @@ public class Decoder {
      * encoding format of SST: ({Q},{I},{O},{X},{q},{f:(q,b)},{t1:(q,a,q)},{t2:(q,a,x,b)})
      * @param encoding Encoding of SST
      * @return An instance of SST
+     * @throws Exception
      */
-    public SST decodeSST(String encoding) {
+    public SST decodeSST(String encoding) throws Exception {
         //split the encoding string into different parts and storing in different arrays or hashmaps
         String[] sets = encoding.split("\\},\\{");
         String[] statesArray = sets[0].substring(2).split(",");
@@ -247,6 +248,26 @@ public class Decoder {
                     variableUpdate[state][symbol][var] = "";
                 } else {
                     variableUpdate[state][symbol][var] = singleTrans[3];
+                }
+            }
+        }
+
+        for (int i = 0; i < variableUpdate.length; i++) {
+            for (int j = 0; j < variableUpdate[i].length; j++) {
+                Boolean[] count = new Boolean[varArray.length];
+                for (int k = 0; k < count.length; k++) {
+                    count[k] = false;
+                }
+                for (int index = 0; index < variableUpdate[i][j].length; index++) {
+                    for (String varString : variables.keySet()) {
+                        if (variableUpdate[i][j][index].contains(varString)) {
+                            if (count[variables.get(varString)] == false) {
+                                count[variables.get(varString)] = true;
+                            } else {
+                                throw new Exception("SST is not copyless.");
+                            }
+                        }
+                    }
                 }
             }
         }
