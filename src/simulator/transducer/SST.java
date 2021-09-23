@@ -69,8 +69,11 @@ public class SST extends Transducer{
             currInputNum = inputAlphabet.get(String.valueOf(stringArray[currPosition]));
             currState = stateTransition[currStateNum][currInputNum];
             for (String variable: variables.keySet()) {
-                newValue = "";
                 currVarNum = variables.get(variable);
+                if (variableUpdate[currStateNum][currInputNum][currVarNum] == null) {
+                    continue;
+                }
+                newValue = "";
                 newValueFormula = variableUpdate[currStateNum][currInputNum][currVarNum].toCharArray();
                 for (int i = 0; i < newValueFormula.length; i++) {
                     currSymbol = String.valueOf(newValueFormula[i]);
