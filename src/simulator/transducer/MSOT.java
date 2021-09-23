@@ -192,6 +192,12 @@ public class MSOT{
         } else if (data.equals("!")) {
             //logic for not
             return !evaluateNodeFormula(formula.getLeftChild(),vertexNum);
+        } else if (data.equals("true")) {
+            //logic for true
+            return true;
+        } else if (data.equals("false")) {
+            //logic for false
+            return false;
         } else if (data.matches("out\\{.\\}\\(.\\)")) {
             //logic for formula out
             //return true if the vertex has an out-edge with related symbol
@@ -241,6 +247,12 @@ public class MSOT{
         } else if (data.equals("!")) {
             //logic for not
             return !evaluateNodeFormulaBound(formula.getLeftChild(),freeVertexNum,boundVar,boundVertexNum);
+        } else if (data.equals("true")) {
+            //logic for true
+            return true;
+        } else if (data.equals("false")) {
+            //logic for false
+            return false;
         } else if (data.matches("out\\{.\\}\\(.\\)")) {
             //logic for formula out
             //return true if the vertex has an out-edge with related symbol
@@ -302,6 +314,12 @@ public class MSOT{
         } else if (data.equals("!")) {
             //logic for not
             return !evaluateEdgeFormula(formula.getLeftChild(),vertex1Num,vertex2Num);
+        } else if (data.equals("true")) {
+            //logic for true
+            return true;
+        } else if (data.equals("false")) {
+            //logic for false
+            return false;
         } else if (data.matches("edge\\{.\\}\\(.,.\\)")) {
             //logic for formula edge
             //return true if there is an edge with related symbol from the first vertex to the second vertex
@@ -444,6 +462,12 @@ public class MSOT{
         } else if (data.equals("!")) {
             //logic for not
             return !evaluateEdgeFormulaBound(formula.getLeftChild(),vertex1Num,vertex2Num,boundVar,boundVertexNum);
+        } else if (data.equals("true")) {
+            //logic for true
+            return true;
+        } else if (data.equals("false")) {
+            //logic for false
+            return false;
         } else if (data.matches("edge\\{.\\}\\(.,.\\)")) {
             //logic for formula edge
             //return true if there is an edge with related symbol from the first vertex to the second vertex
