@@ -298,7 +298,6 @@ public class Decoder {
      * @return Encoding of SST
      */
     public String fromTDFTtoSST(String encoding){
-        //TODO: translation function
         //store 2DFT
         //split the encoding string into different parts and storing in different arrays or hashmaps
         String[] sets = encoding.split("\\},\\{");
@@ -326,7 +325,7 @@ public class Decoder {
         }
         //add state m
         states.put("m",statesArray.length+finalStatesArray.length-1);
-        states.put("qeer",statesArray.length+finalStatesArray.length);
+        states.put("qerr",statesArray.length+finalStatesArray.length);
         //add endmarker
         inputAlphabet.put("^",inAlpha.length);
         inputAlphabet.put("&",inAlpha.length+1);
@@ -431,7 +430,6 @@ public class Decoder {
         // state m
         nextState += states.get(initialState) * Math.pow(base, base-2);
         varUpLEM[2*(base-2)] = "";
-
         int firstState = nextState;
         //compute stateTransitionFunc and variable-update function combined with simulating on left endmarker
         String[][] varUp = new String[inAlpha.length][variableArray.length];
@@ -444,13 +442,13 @@ public class Decoder {
                 String newVal2 = "";
                 Object[] transfunc = transition[j][i];
                 //careful about 0
-                if ((int)transfunc[2] == 1) {
+                if (transfunc[2] != null && (int)transfunc[2] == 1) {
                     nextState += states.get((String)transfunc[1]) * Math.pow(base, j);
                     newVal1 = (String)transfunc[0];
                     newVal2 = (String)transfunc[0];
                     varUp[i][2*j] = newVal1;
                     varUp[i][2*j+1] = newVal2;                        
-                } else if ((int)transfunc[2] == -1) {
+                } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
                     while (true) {
                         newVal1 += (String)transfunc[0];
                         newVal2 += (String)transfunc[0];
@@ -463,14 +461,14 @@ public class Decoder {
                         }
                         int backState = tempCurrState % base;
                         transfunc = transition[backState][i];
-                        if ((int)transfunc[2] == 1) {
+                        if (transfunc[2] != null && (int)transfunc[2] == 1) {
                             newVal1 += transfunc[0];
                             newVal2 += transfunc[0];
                             varUp[i][2*j] = newVal1;
                             varUp[i][2*j+1] = newVal2;
                             nextState += states.get((String)transfunc[1]) * Math.pow(base, j);
                             break;
-                        } else if ((int)transfunc[2] == -1) {
+                        } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
                             continue;
                         } else {
                             varUp[i][2*j] = "";
@@ -493,11 +491,11 @@ public class Decoder {
             int mState = tempCurrState % base;
             Object[] mtransfunc = transition[mState][i];
             //careful about 0
-            if ((int)mtransfunc[2] == 1) {
+            if (mtransfunc[2] != null && (int)mtransfunc[2] == 1) {
                 nextState += states.get(mtransfunc[1]) * Math.pow(base, base-2);
                 newVal += (String)mtransfunc[0];
                 varUp[i][2*(base-2)] = newVal;
-            } else if ((int)mtransfunc[2] == -1) {
+            } else if (mtransfunc[2] != null && (int)mtransfunc[2] == -1) {
                 while (true) {
                     newVal = (String)mtransfunc[0];
                     int leftState = states.get(mtransfunc[1]);
@@ -508,12 +506,12 @@ public class Decoder {
                     }
                     int backState = tempCurrState % base;
                     mtransfunc = transition[backState][i];
-                    if ((int)mtransfunc[2] == 1) {
+                    if (mtransfunc[2] != null && (int)mtransfunc[2] == 1) {
                         newVal += mtransfunc[0];
                         varUp[i][2*(base-2)] = newVal;
                         nextState += states.get((String)mtransfunc[1]) * Math.pow(base, base-2);
                         break;
-                    } else if ((int)mtransfunc[2] == -1) {
+                    } else if (mtransfunc[2] != null && (int)mtransfunc[2] == -1) {
                         continue;
                     } else {
                         newVal = "";
@@ -546,9 +544,9 @@ public class Decoder {
         int mState = tempCurrState % base;
         Object[] mtransfunc = transition[mState][inAlpha.length+1];
         //careful about 0
-        if ((int)mtransfunc[2] == 1) {
+        if (mtransfunc[2] != null && (int)mtransfunc[2] == 1) {
             output += (String)mtransfunc[0];
-        } else if ((int)mtransfunc[2] == -1) {
+        } else if (mtransfunc[2] != null && (int)mtransfunc[2] == -1) {
             while (true) {
                 output += (String)mtransfunc[0];
                 int leftState = states.get((String)mtransfunc[1]);
@@ -559,11 +557,11 @@ public class Decoder {
                 }
                 int backState = tempCurrState % base;
                 mtransfunc = transition[backState][inAlpha.length+1];
-                if ((int)mtransfunc[2] == 1) {
+                if (mtransfunc[2] != null && (int)mtransfunc[2] == 1) {
                     output += mtransfunc[0];
                     finalState = (String)mtransfunc[1];
                     break;
-                } else if ((int)mtransfunc[2] == -1) {
+                } else if (mtransfunc[2] != null && (int)mtransfunc[2] == -1) {
                     continue;
                 } else {
                     output = "";
@@ -571,7 +569,7 @@ public class Decoder {
                 }            
             }
         } else {//map to qerr
-            finalState = "qeer";
+            finalState = "qerr";
             output = "";
         }
 
@@ -583,6 +581,7 @@ public class Decoder {
         //loop to find all states
         while (!stateQueue.isEmpty()) {
             int currState = stateQueue.poll();
+            SSTState.add(currState);
             varUp = new String[inAlpha.length][variableArray.length];
             stateUp = new Integer[inAlpha.length];
             for (int i = 0; i < inAlpha.length; i++) {//for every input Symbol
@@ -592,44 +591,43 @@ public class Decoder {
                     String newVal1 = "";
                     String newVal2 = "";
                     Object[] transfunc = transition[j][i];
-                    if (transfunc != null) {//careful about 0
-                        if ((int)transfunc[2] == 1) {
-                            nextState += states.get((String)transfunc[1]) * Math.pow(base, j);
-                            newVal1 = (String)transfunc[0];
-                            newVal2 = (String)transfunc[0];
-                            varUp[i][2*j] = newVal1;
-                            varUp[i][2*j+1] = newVal2;                        
-                        } else if ((int)transfunc[2] == -1) {
-                            while (true) {
-                                newVal1 += (String)transfunc[0];
-                                newVal2 += (String)transfunc[0];
-                                int leftState = states.get((String)transfunc[1]);
-                                newVal1 += variableArray[2*leftState];
-                                newVal2 += variableArray[2*leftState+1];
-                                tempCurrState = currState;
-                                for (int index = 0; index < leftState; index++) {
-                                    tempCurrState = tempCurrState / base;
-                                }
-                                int backState = tempCurrState % base;
-                                transfunc = transition[backState][i];
-                                if ((int)transfunc[2] == 1) {
-                                    newVal1 += transfunc[0];
-                                    newVal2 += transfunc[0];
-                                    varUp[i][2*j] = newVal1;
-                                    varUp[i][2*j+1] = newVal2;
-                                    nextState += states.get((String)transfunc[1]) * Math.pow(base, j);
-                                    break;
-                                } else if ((int)transfunc[2] == -1) {
-                                    continue;
-                                } else {
-                                    newVal1 = "";
-                                    newVal2 = "";
-                                    varUp[i][2*j] = newVal1;
-                                    varUp[i][2*j+1] = newVal2;
-                                    nextState += (base-1) * Math.pow(base, j);
-                                }                               
-                                break;
+                    //careful about 0
+                    if (transfunc[2] != null && (int)transfunc[2] == 1) {
+                        nextState += states.get((String)transfunc[1]) * Math.pow(base, j);
+                        newVal1 = (String)transfunc[0];
+                        newVal2 = (String)transfunc[0];
+                        varUp[i][2*j] = newVal1;
+                        varUp[i][2*j+1] = newVal2;                        
+                    } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
+                        while (true) {
+                            newVal1 += (String)transfunc[0];
+                            newVal2 += (String)transfunc[0];
+                            int leftState = states.get((String)transfunc[1]);
+                            newVal1 += variableArray[2*leftState];
+                            newVal2 += variableArray[2*leftState+1];
+                            tempCurrState = currState;
+                            for (int index = 0; index < leftState; index++) {
+                                tempCurrState = tempCurrState / base;
                             }
+                            int backState = tempCurrState % base;
+                            transfunc = transition[backState][i];
+                            if (transfunc[2] != null && (int)transfunc[2] == 1) {
+                                newVal1 += transfunc[0];
+                                newVal2 += transfunc[0];
+                                varUp[i][2*j] = newVal1;
+                                varUp[i][2*j+1] = newVal2;
+                                nextState += states.get((String)transfunc[1]) * Math.pow(base, j);
+                                break;
+                            } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
+                                continue;
+                            } else {
+                                newVal1 = "";
+                                newVal2 = "";
+                                varUp[i][2*j] = newVal1;
+                                varUp[i][2*j+1] = newVal2;
+                                nextState += (base-1) * Math.pow(base, j);
+                            }                               
+                            break;
                         }
                     } else {//map to qerr
                         nextState += (base-1) * Math.pow(base, j);
@@ -644,32 +642,29 @@ public class Decoder {
                 }
                 mState = tempCurrState % base;
                 Object[] transfunc = transition[mState][i];
-                if (transfunc != null) {//careful about 0
-                    if ((int)transfunc[2] == 1) {
-                        nextState += states.get((String)transfunc[1]) * Math.pow(base, base-2);
-                        newVal += (String)transfunc[0];
-                        varUp[i][2*(base-2)] = newVal;
-                    } else if ((int)transfunc[2] == -1) {
-                        while (true) {
-                            newVal = (String)transfunc[0];
-                            int leftState = states.get((String)transfunc[1]);
-                            newVal += variableArray[2*leftState+1];
-                            tempCurrState = firstState;
-                            for (int index = 0; index < leftState; index++) {
-                                tempCurrState = tempCurrState / base;
-                            }
-                            int backState = tempCurrState % base;
-                            transfunc = transition[backState][i];
-                            if (transfunc != null) {
-                                if ((int)transfunc[2] == 1) {
-                                    newVal += transfunc[0];
-                                    varUp[i][2*(base-2)] = newVal;
-                                    nextState += states.get((String)transfunc[1]) * Math.pow(base, base-2);
-                                    break;
-                                } else if ((int)transfunc[2] == -1) {
-                                    continue;
-                                }
-                            }
+                if (transfunc[2] != null && (int)transfunc[2] == 1) {
+                    nextState += states.get((String)transfunc[1]) * Math.pow(base, base-2);
+                    newVal += (String)transfunc[0];
+                    varUp[i][2*(base-2)] = newVal;
+                } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
+                    while (true) {
+                        newVal = (String)transfunc[0];
+                        int leftState = states.get((String)transfunc[1]);
+                        newVal += variableArray[2*leftState+1];
+                        tempCurrState = firstState;
+                        for (int index = 0; index < leftState; index++) {
+                            tempCurrState = tempCurrState / base;
+                        }
+                        int backState = tempCurrState % base;
+                        transfunc = transition[backState][i];
+                        if (transfunc[2] != null && (int)transfunc[2] == 1) {
+                            newVal += transfunc[0];
+                            varUp[i][2*(base-2)] = newVal;
+                            nextState += states.get((String)transfunc[1]) * Math.pow(base, base-2);
+                            break;
+                        } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
+                            continue;
+                        } else {
                             newVal = "";
                             varUp[i][2*(base-2)] = newVal;
                             nextState += (base-1) * Math.pow(base, base-2);
@@ -685,7 +680,6 @@ public class Decoder {
                     stateQueue.offer(nextState);
                 }
             }
-            SSTState.add(currState);
             stateTransitionFunc.add(stateUp);
             variableUpdateFunc.add(varUp);
             //compute partial output func
@@ -698,9 +692,9 @@ public class Decoder {
             mState = tempCurrState % base;
             Object[] transfunc = transition[mState][inAlpha.length+1];
             //careful about 0
-            if ((int)transfunc[2] == 1) {
+            if (transfunc[2] != null && (int)transfunc[2] == 1) {
                 output += (String)transfunc[0];
-            } else if ((int)transfunc[2] == -1) {
+            } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
                 while (true) {
                     output += (String)transfunc[0];
                     int leftState = states.get((String)transfunc[1]);
@@ -711,11 +705,11 @@ public class Decoder {
                     }
                     int backState = tempCurrState % base;
                     transfunc = transition[backState][inAlpha.length+1];
-                    if ((int)transfunc[2] == 1) {
+                    if (transfunc[2] != null && (int)transfunc[2] == 1) {
                         output += transfunc[0];
                         finalState = (String)transfunc[1];
                         break;
-                    } else if ((int)transfunc[2] == -1) {
+                    } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
                         continue;
                     } else {
                         output = "";
@@ -723,7 +717,7 @@ public class Decoder {
                     }                            
                 }
             } else {//map to qerr
-                finalState = "qeer";
+                finalState = "qerr";
                 output = "";
             }
             if (finalStates.contains(finalState)) {
@@ -731,8 +725,6 @@ public class Decoder {
             } else {
                 partialOutputFunc.add("");
             }
-
-            
         }
         //construct SST encoding
         //initialise
@@ -773,10 +765,10 @@ public class Decoder {
         for (int i = 0; i < SSTState.size(); i++) {
             if (!partialOutputFunc.get(i).equals("")) {
                 if (isFirst) {
-                    SSTencoding += "(q" + String.valueOf(i) + "," + partialOutputFunc.get(0) + ")";
+                    SSTencoding += "(q" + String.valueOf(i) + "," + partialOutputFunc.get(i) + ")";
                     isFirst = false;
                 } else {
-                    SSTencoding += ",(q" + String.valueOf(i) + "," + partialOutputFunc.get(0) + ")";
+                    SSTencoding += ",(q" + String.valueOf(i) + "," + partialOutputFunc.get(i) + ")";
                 }
                 
             }
