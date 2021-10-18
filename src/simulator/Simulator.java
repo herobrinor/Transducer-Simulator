@@ -208,7 +208,8 @@ public class Simulator {
                             break;
                         }
                         String SSTDesc = decoder.fromTDFTtoSST(modelDesc);
-                        System.err.println(SSTDesc);
+                        System.out.println("Encoding of SST:");
+                        System.out.println(SSTDesc);
                         break;
                     default:
                         break;
@@ -223,7 +224,7 @@ public class Simulator {
                                 "2: MSOT\n" +
                                 "3: SST\n" +
                                 "4: 2DFT -> SST\n" +
-
+                                "5: SST -> 2DFT\n" +
                                 "0: exit");
             try {
                 choice = Integer.parseInt(sc.nextLine());
