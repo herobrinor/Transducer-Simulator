@@ -3,6 +3,10 @@ package simulator;
 import simulator.transducer.*;
 import simulator.util.Node;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -295,53 +299,542 @@ public class Decoder {
      */
     public String fromTDFTtoSST(String encoding){
         //TODO: translation function
+        //store 2DFT
         //split the encoding string into different parts and storing in different arrays or hashmaps
-        // String[] sets = encoding.split("\\},\\{");
-        // String[] statesArray = sets[0].substring(2).split(",");
-        // String[] inAlpha = sets[1].split(",");
-        // String[] outAlpha = sets[2].split(",");
-        // String[] tranFunc = sets[3].split("\\),\\(");
-        // String initialState = sets[4];
-        // String[] finalStatesArray = sets[5].substring(0,sets[5].length()-2).split(",");
+        String[] sets = encoding.split("\\},\\{");
+        String[] statesArray = sets[0].substring(2).split(",");
+        String[] inAlpha = sets[1].split(",");
+        String[] outAlpha = sets[2].split(",");
+        String[] tranFunc = sets[3].split("\\),\\(");
+        String initialState = sets[4];
+        String[] finalStatesArray = sets[5].substring(0,sets[5].length()-2).split(",");
+        HashMap<String, Integer> states = new HashMap<String, Integer>();
+        HashMap<String, Integer> inputAlphabet = new HashMap<String, Integer>();
+        HashSet<String> finalStates = new HashSet<String>();
+        HashSet<String> outputAlphabet = new HashSet<String>();
+        for (int i = 0; i < statesArray.length; i++) {
+            states.put(statesArray[i],i);
+        }
+        for (int i = 0; i < inAlpha.length; i++) {
+            inputAlphabet.put(inAlpha[i],i);
+        }
+        for (int i = 0; i < outAlpha.length; i++) {
+            outputAlphabet.add(outAlpha[i]);
+        }
+        for (int i = 0; i < finalStatesArray.length; i++) {
+            finalStates.add(finalStatesArray[i]);
+        }
+        //add state m
+        states.put("m",statesArray.length+finalStatesArray.length-1);
+        states.put("qeer",statesArray.length+finalStatesArray.length);
+        //add endmarker
+        inputAlphabet.put("^",inAlpha.length);
+        inputAlphabet.put("&",inAlpha.length+1);
+        //store transition function
+        Object[][][] transition = new Object[statesArray.length][inAlpha.length+2][3];
+        String[] singleTrans;
+        for (int i = 0; i < tranFunc.length; i++) {
+            if (i == 0) {
+                singleTrans = tranFunc[i].substring(1).split(",");
+            } else if (i == tranFunc.length-1) {
+                singleTrans = tranFunc[i].substring(0,tranFunc[i].length()-1).split(",");
+            } else {
+                singleTrans = tranFunc[i].split(",");
+            }           
+            int state = states.get(singleTrans[0]);
+            int symbol = inputAlphabet.get(singleTrans[1]);
+            transition[state][symbol][0] = singleTrans[2];
+            transition[state][symbol][1] = singleTrans[3];
+            transition[state][symbol][2] = Integer.parseInt(singleTrans[4]);
+        }
+        // add new transtion functions to make 2DFT start in left endmarker
+        int initialStateNum = states.get(initialState);
+        transition[initialStateNum][inAlpha.length][0] = "";
+        transition[initialStateNum][inAlpha.length][1] = initialState;
+        transition[initialStateNum][inAlpha.length][2] = 1;
+        // add new transtion functions to make 2DFT end in right endmarker
+        for (int i = 0; i < finalStatesArray.length; i++) {
+            int state = states.get(finalStatesArray[i]);
+            for (int j = 0; j < inAlpha.length; j++) {
+                transition[state][j][0] = "";
+                transition[state][j][1] = finalStatesArray[i];
+                transition[state][j][2] = 1;
+            }
+            transition[state][inAlpha.length+1][0] = "";
+            transition[state][inAlpha.length+1][1] = finalStatesArray[i]+"'";
+            transition[state][inAlpha.length+1][2] = 1;
+        }
 
-        // HashMap<String, Integer> states = new HashMap<String, Integer>();
-        // HashMap<String, Integer> inputAlphabet = new HashMap<String, Integer>();
-        // HashSet<String> finalStates = new HashSet<String>();
-        // HashSet<String> outputAlphabet = new HashSet<String>();
-        // for (int i = 0; i < statesArray.length; i++) {
-        //     states.put(statesArray[i],i);
-        // }
-        // for (int i = 0; i < inAlpha.length; i++) {
-        //     inputAlphabet.put(inAlpha[i],i);
-        // }
-        // for (int i = 0; i < outAlpha.length; i++) {
-        //     outputAlphabet.add(outAlpha[i]);
-        // }
-        // for (int i = 0; i < finalStatesArray.length; i++) {
-        //     finalStates.add(finalStatesArray[i]);
-        // }
-        // inputAlphabet.put("^",inAlpha.length);
-        // inputAlphabet.put("&",inAlpha.length+1);
-        // //store transition function
-        // Object[][][] transition = new Object[statesArray.length][inAlpha.length+2][3];
-        // String[] singleTrans;
-        // for (int i = 0; i < tranFunc.length; i++) {
-        //     if (i == 0) {
-        //         singleTrans = tranFunc[i].substring(1).split(",");
-        //     } else if (i == tranFunc.length-1) {
-        //         singleTrans = tranFunc[i].substring(0,tranFunc[i].length()-1).split(",");
-        //     } else {
-        //         singleTrans = tranFunc[i].split(",");
-        //     }           
-        //     int state = states.get(singleTrans[0]);
-        //     int symbol = inputAlphabet.get(singleTrans[1]);
-        //     transition[state][symbol][0] = singleTrans[2];
-        //     transition[state][symbol][1] = singleTrans[3];
-        //     transition[state][symbol][2] = Integer.parseInt(singleTrans[4]);
-        // }
+        //construct new states in SST
+        //use decimal number to represent a N-base number as the states of SST
+        //starting state is identity function form Q to Q U {m, qerr}.
+        int base = states.size();
+        //store visited states, exploring states, variable-update function, state-transition function and pratial output function
+        ArrayList<Integer> SSTState = new ArrayList<Integer>();
+        Queue<Integer> stateQueue = new LinkedList<Integer>();
+        ArrayList<String> partialOutputFunc =new ArrayList<>();
+        ArrayList<Integer[]> stateTransitionFunc =new ArrayList<>();
+        ArrayList<String[][]> variableUpdateFunc =new ArrayList<>();
+        HashMap<String, Integer> variables = new HashMap<String, Integer>();
+        String[] variableArray = new String[2*base-3];
+        //initalise variable set in SST
+        char varNum1 = 65;//symbol A
+        char varNum2 = (char) (varNum1 + 1);
+        int count = 0;
+        while (count < base-2) {
+            String var1 = String.valueOf(varNum1);
+            String var2 = String.valueOf(varNum2);
+            if (outputAlphabet.contains(var1)) {
+                varNum1 += 1;
+                varNum2 += 1;
+            } else {
+                if (outputAlphabet.contains(var2)) {
+                    varNum2 += 1;
+                } else {
+                    variableArray[2*count] = var1;
+                    variables.put(var1, count);
+                    variableArray[2*count+1] = var2;
+                    variables.put(var2, count);
+                    varNum1 = (char) (varNum2 + 1);
+                    varNum2 = (char) (varNum1 + 1);
+                    count += 1;
+                }
+            }
+        }
+        while (count == base-2) {
+            String var1 = String.valueOf(varNum1);
+            if (outputAlphabet.contains(var1)) {
+                varNum1 += 1;
+            } else {
+                variableArray[2*count] = var1;
+                variables.put(var1, count);
+                varNum1 += 1;
+                count += 1;
+            }
+        }
+        //simulate 2DFT on left endmarker
+        int nextState = 0;
+        String[] varUpLEM = new String[variableArray.length];
+        // state except m
+        for (int i = 0; i < base-2; i++) {
+            Object[] transfunc = transition[i][inAlpha.length];
+            if (transfunc[2] != null && (int)transfunc[2] == 1) {//careful about 0
+                nextState += states.get((String)transfunc[1]) * Math.pow(base, i);
+                varUpLEM[2*i] = (String)transfunc[0];
+                varUpLEM[2*i+1] = (String)transfunc[0];
+            } else {//map to qerr
+                nextState += (base-1) * Math.pow(base, i);
+                varUpLEM[2*i] = "";
+                varUpLEM[2*i+1] = "";
+            }
+            System.out.println(i);
+            System.out.println(nextState);
+        }
+        // state m
+        nextState += states.get(initialState) * Math.pow(base, base-2);
+        varUpLEM[base-2] = "";
+        System.out.println(nextState);
 
-        // String[][] returnInfo = new String[statesArray.length][1];
-        return "";
+        int firstState = nextState;
+        //compute stateTransitionFunc and variable-update function combined with simulating on left endmarker
+        String[][] varUp = new String[inAlpha.length][variableArray.length];
+        Integer[] stateUp = new Integer[inAlpha.length];
+        for (int i = 0; i < inAlpha.length; i++) {//for every input Symbol
+            nextState = 0;
+            // state except m
+            for (int j = 0; j < base-2; j++) {
+                String newVal = "";
+                Object[] transfunc = transition[j][i];
+                if (transfunc != null) {//careful about 0
+                    if ((int)transfunc[2] == 1) {
+                        nextState += states.get((String)transfunc[1]) * Math.pow(base, j);
+                        newVal = (String)transfunc[0];
+                        varUp[i][2*j] = newVal;
+                        varUp[i][2*j+1] = newVal;                        
+                    } else if ((int)transfunc[2] == -1) {
+                        while (true) {
+                            newVal += (String)transfunc[0];
+                            int leftState = states.get((String)transfunc[1]);
+                            newVal += varUpLEM[2*leftState];
+                            int tempCurrState = firstState;
+                            for (int index = 0; index < leftState-1; index++) {
+                                tempCurrState = tempCurrState / base;
+                            }
+                            int backState = tempCurrState % base;
+                            transfunc = transition[backState][i];
+                            if (transfunc != null) {
+                                if ((int)transfunc[2] == 1) {
+                                    newVal += transfunc[0];
+                                    varUp[i][2*j] = newVal;
+                                    varUp[i][2*j+1] = newVal;
+                                    nextState += states.get((String)transfunc[1]) * Math.pow(base, j);
+                                    break;
+                                } else if ((int)transfunc[2] == -1) {
+                                    continue;
+                                }
+                            }
+                            newVal = "";
+                            varUp[i][2*j] = newVal;
+                            varUp[i][2*j+1] = newVal;
+                            nextState += (base-1) * Math.pow(base, j);
+                            break;
+                        }
+                    }
+                } else {//map to qerr
+                    nextState += (base-1) * Math.pow(base, j);
+                    varUp[i][j] = "";
+                }
+            }
+            // state m
+            String newVal = varUpLEM[2*(base-2)];
+            int tempCurrState = firstState;
+            for (int index = 0; index < base-2; index++) {
+                tempCurrState = tempCurrState / base;
+            }
+            int mState = tempCurrState % base;
+            Object[] mtransfunc = transition[mState][i];
+            if (mtransfunc != null) {//careful about 0
+                if ((int)mtransfunc[2] == 1) {
+                    nextState += states.get(mtransfunc[1]) * Math.pow(base, base-2);
+                    newVal += (String)mtransfunc[0];
+                    varUp[i][2*(base-2)] = newVal;
+                } else if ((int)mtransfunc[2] == -1) {
+                    while (true) {
+                        newVal = (String)mtransfunc[0];
+                        int leftState = states.get(mtransfunc[1]);
+                        newVal += varUpLEM[2*leftState+1];
+                        tempCurrState = firstState;
+                        for (int index = 0; index < leftState-1; index++) {
+                            tempCurrState = tempCurrState / base;
+                        }
+                        int backState = tempCurrState % base;
+                        mtransfunc = transition[backState][i];
+                        if (mtransfunc != null) {
+                            if ((int)mtransfunc[2] == 1) {
+                                newVal += mtransfunc[0];
+                                varUp[i][2*(base-2)] = newVal;
+                                nextState += states.get((String)mtransfunc[1]) * Math.pow(base, base-2);
+                                break;
+                            } else if ((int)mtransfunc[2] == -1) {
+                                continue;
+                            }
+                        }
+                        newVal = "";
+                        varUp[i][2*(base-2)] = newVal;
+                        nextState += (base-1) * Math.pow(base, base-2);
+                        break;
+                    }
+                }
+            } else {//map to qerr
+                nextState += (base-1) * Math.pow(base, base-2);
+                varUp[i][base-2] = "";
+            }
+            stateUp[i] = nextState;
+            if (!SSTState.contains(nextState) && !stateQueue.contains(nextState)) {
+                stateQueue.offer(nextState);
+                System.out.println(nextState);
+            }
+        }
+        SSTState.add(firstState);
+        stateTransitionFunc.add(stateUp);
+        variableUpdateFunc.add(varUp);
+
+        System.out.println("finish computing stateTransitionFunc");
+        //compute partial output func
+        String output = variableArray[2*(base-2)];
+        String finalState = "m";
+        int tempCurrState = firstState;
+        for (int index = 0; index < base-2; index++) {
+            tempCurrState = tempCurrState / base;
+        }
+        int mState = tempCurrState % base;
+        Object[] mtransfunc = transition[mState][inAlpha.length+1];
+        if (mtransfunc != null) {//careful about 0
+            if ((int)mtransfunc[2] == 1) {
+                output = (String)mtransfunc[0];
+            } else if ((int)mtransfunc[2] == -1) {
+                while (true) {
+                    output = (String)mtransfunc[0];
+                    int leftState = states.get((String)mtransfunc[1]);
+                    output += variableArray[2*leftState+1];
+                    tempCurrState = firstState;
+                    for (int index = 0; index < leftState-1; index++) {
+                        tempCurrState = tempCurrState / base;
+                    }
+                    int backState = tempCurrState % base;
+                    mtransfunc = transition[backState][inAlpha.length+1];
+                    if (mtransfunc != null) {
+                        if ((int)mtransfunc[2] == 1) {
+                            output += mtransfunc[0];
+                            finalState = (String)mtransfunc[1];
+                            break;
+                        } else if ((int)mtransfunc[2] == -1) {
+                            continue;
+                        }
+                    }
+                    output = "";
+                    break;
+                }
+            }
+        } else {//map to qerr
+            finalState = "qeer";
+            output = "";
+        }
+        if (finalStates.contains(finalState)) {
+            partialOutputFunc.add(output);
+        } else {
+            partialOutputFunc.add("");
+        }
+        System.out.println("finish computing partial output");
+        //loop to find all states
+        while (!stateQueue.isEmpty()) {
+            System.out.println(Arrays.toString(stateQueue.toArray()));
+            int currState = stateQueue.poll();
+
+            varUp = new String[inAlpha.length][variableArray.length];
+            stateUp = new Integer[inAlpha.length];
+            for (int i = 0; i < inAlpha.length; i++) {//for every input Symbol
+                nextState = 0;
+                // state except m
+                for (int j = 0; j < base-2; j++) {
+                    String newVal = "";
+                    Object[] transfunc = transition[j][i];
+                    if (transfunc != null) {//careful about 0
+                        if ((int)transfunc[2] == 1) {
+                            nextState += states.get((String)transfunc[1]) * Math.pow(base, j);
+                            newVal = (String)transfunc[0];
+                            varUp[i][2*j] = newVal;
+                            varUp[i][2*j+1] = newVal;                        
+                        } else if ((int)transfunc[2] == -1) {
+                            while (true) {
+                                System.out.println("true");
+                                newVal += (String)transfunc[0];
+                                int leftState = states.get((String)transfunc[1]);
+                                newVal += variableArray[2*leftState];
+                                tempCurrState = currState;
+                                for (int index = 0; index < leftState-1; index++) {
+                                    tempCurrState = tempCurrState / base;
+                                }
+                                int backState = tempCurrState % base;
+                                transfunc = transition[backState][i];
+                                if (transfunc != null) {
+                                    if ((int)transfunc[2] == 1) {
+                                        newVal += transfunc[0];
+                                        varUp[i][2*j] = newVal;
+                                        varUp[i][2*j+1] = newVal;
+                                        nextState += states.get((String)transfunc[1]) * Math.pow(base, j);
+                                        break;
+                                    } else if ((int)transfunc[2] == -1) {
+                                        continue;
+                                    }
+                                }
+                                newVal = "";
+                                varUp[i][2*j] = newVal;
+                                varUp[i][2*j+1] = newVal;
+                                nextState += (base-1) * Math.pow(base, j);
+                                break;
+                            }
+                        }
+                    } else {//map to qerr
+                        nextState += (base-1) * Math.pow(base, j);
+                        varUp[i][j] = "";
+                    }
+                }
+                System.out.println("finish all state except m");
+                // state m
+                String newVal = variableArray[2*(base-2)];
+                tempCurrState = currState;
+                for (int index = 0; index < base-2; index++) {
+                    tempCurrState = tempCurrState / base;
+                }
+                mState = tempCurrState % base;
+                Object[] transfunc = transition[mState][i];
+                if (transfunc != null) {//careful about 0
+                    if ((int)transfunc[2] == 1) {
+                        nextState += states.get((String)transfunc[1]) * Math.pow(base, base-2);
+                        newVal += (String)transfunc[0];
+                        varUp[i][2*(base-2)] = newVal;
+                    } else if ((int)transfunc[2] == -1) {
+                        while (true) {
+                            newVal = (String)transfunc[0];
+                            int leftState = states.get((String)transfunc[1]);
+                            newVal += variableArray[2*leftState+1];
+                            tempCurrState = firstState;
+                            for (int index = 0; index < leftState-1; index++) {
+                                tempCurrState = tempCurrState / base;
+                            }
+                            int backState = tempCurrState % base;
+                            transfunc = transition[backState][i];
+                            if (transfunc != null) {
+                                if ((int)transfunc[2] == 1) {
+                                    newVal += transfunc[0];
+                                    varUp[i][2*(base-2)] = newVal;
+                                    nextState += states.get((String)transfunc[1]) * Math.pow(base, base-2);
+                                    break;
+                                } else if ((int)transfunc[2] == -1) {
+                                    continue;
+                                }
+                            }
+                            newVal = "";
+                            varUp[i][2*(base-2)] = newVal;
+                            nextState += (base-1) * Math.pow(base, base-2);
+                            break;
+                        }
+                    }
+                } else {//map to qerr
+                    nextState += (base-1) * Math.pow(base, base-2);
+                    varUp[i][base-2] = "";
+                }
+                stateUp[i] = nextState;
+                if (!SSTState.contains(nextState) && !stateQueue.contains(nextState)) {
+                    stateQueue.offer(nextState);
+                }
+            }
+            SSTState.add(currState);
+            stateTransitionFunc.add(stateUp);
+            variableUpdateFunc.add(varUp);
+            System.out.println("finish all state including m");
+            //compute partial output func
+            output = variableArray[2*(base-2)];
+            finalState = "m";
+            tempCurrState = currState;
+            for (int index = 0; index < base-2; index++) {
+                tempCurrState = tempCurrState / base;
+            }
+            mState = tempCurrState % base;
+            Object[] transfunc = transition[mState][inAlpha.length+1];
+            if (transfunc != null) {//careful about 0
+                if ((int)transfunc[2] == 1) {
+                    output = (String)transfunc[0];
+                } else if ((int)transfunc[2] == -1) {
+                    while (true) {//TODO: infinit loop here 
+                        // System.out.println("computing partial output");
+                        output = (String)transfunc[0];
+                        int leftState = states.get((String)transfunc[1]);
+                        output += variableArray[2*leftState+1];
+                        tempCurrState = currState;
+                        for (int index = 0; index < leftState-1; index++) {
+                            tempCurrState = tempCurrState / base;
+                        }
+                        int backState = tempCurrState % base;
+                        transfunc = transition[backState][inAlpha.length+1];
+                        if (transfunc != null) {
+                            if ((int)transfunc[2] == 1) {
+                                output += transfunc[0];
+                                finalState = (String)transfunc[1];
+                                break;
+                            } else if ((int)transfunc[2] == -1) {
+                                continue;
+                            }
+                        }
+                        output = "";
+                        break;
+                    }
+                }
+            } else {//map to qerr
+                finalState = "qeer";
+                output = "";
+            }
+            if (finalStates.contains(finalState)) {
+                partialOutputFunc.add(output);
+            } else {
+                partialOutputFunc.add("");
+            }
+
+            
+        }
+        
+        System.out.println("finish computing for all SST states");
+        //construct SST encoding
+        //initialise
+        String SSTencoding = "(";
+        Boolean isFirst = true;// flag for first element in brackets
+        //add states set
+        SSTencoding += "{";
+        for (int i = 0; i < SSTState.size(); i++) {
+            String state = "q" + String.valueOf(i);
+            if (isFirst) {
+                SSTencoding += state;
+                isFirst = false;
+            } else {
+                SSTencoding +=  "," + state;
+            }
+            
+        }
+        SSTencoding += "},";
+        //add input and output alphbet 
+        SSTencoding = SSTencoding + "{" + sets[1] + "},{" + sets[2] + "},";
+        //add variable sets
+        isFirst = true;
+        SSTencoding += "{";
+        if (variableArray.length > 1) {
+            SSTencoding += variableArray[0];
+        }
+        for (int i = 0; i < variableArray.length; i++) {
+            if (isFirst) {
+                SSTencoding += variableArray[i];
+                isFirst = false;
+            } else {
+                SSTencoding += "," + variableArray[i];
+            }
+        }
+        SSTencoding += "},";
+        //add initial state
+        SSTencoding += "{q0},";
+        //add partial output function
+        isFirst = true;
+        SSTencoding += "{";
+        for (int i = 0; i < SSTState.size(); i++) {
+            if (!partialOutputFunc.get(i).equals("")) {
+                if (isFirst) {
+                    SSTencoding += "(q" + String.valueOf(i) + "," + partialOutputFunc.get(0) + ")";
+                    isFirst = false;
+                } else {
+                    SSTencoding += ",(q" + String.valueOf(i) + "," + partialOutputFunc.get(0) + ")";
+                }
+                
+            }
+        }
+        SSTencoding += "},";
+        //add state-transition function
+        SSTencoding += "{";
+        isFirst = true;
+        for (int index = 0; index < stateTransitionFunc.size(); index++) {
+            Integer[] toStates = stateTransitionFunc.get(index);
+            for (int i = 0; i < toStates.length; i++) {
+                if (toStates[i] != null) {
+                    if (isFirst) {
+                        SSTencoding += "(q" + String.valueOf(index) + "," + inAlpha[i] + ",q" + SSTState.indexOf(toStates[i]) + ")";
+                        isFirst = false;
+                    } else {
+                        SSTencoding += ",(q" + String.valueOf(index) + "," + inAlpha[i] + ",q" + SSTState.indexOf(toStates[i]) + ")";
+                    }
+                }
+            }   
+        }
+
+        SSTencoding += "},";
+        //add variable-update function
+        SSTencoding += "{";
+        isFirst = true;
+        for (int index = 0; index < SSTState.size(); index++) {
+            String[][] update = variableUpdateFunc.get(index);
+            for (int i = 0; i < update.length; i++) {
+                for (int j = 0; j < update[i].length; j++) {
+                    if (update[i][j] != null) {
+                        if (isFirst) {
+                            SSTencoding += "(q" + String.valueOf(index) + "," + inAlpha[i] + "," + variableArray[j] + "," + update[i][j] + ")";
+                            isFirst = false;
+                        } else {
+                            SSTencoding += ",(q" + String.valueOf(index) + "," + inAlpha[i] + "," + variableArray[j] + "," + update[i][j] + ")";
+                        }
+                    }
+                }
+            }
+        }
+        SSTencoding += "})";    
+
+        return SSTencoding;
     }
 
     /**

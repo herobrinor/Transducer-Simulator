@@ -55,31 +55,33 @@ public class Simulator {
         decoder = new Decoder();
 
         // model choice (-1 for invalid input)
-        int modelInt = -1;
+        int choice = -1;
         
         //ask user for model choice
-        System.out.println("Please choose the type of the transducer model:\n" +
+        System.out.println("Please choose the type of the transducer model or type of translation function to enter:\n" +
                             "1: 2DFT\n" +
                             "2: MSOT\n" +
                             "3: SST\n" +
+                            "4: 2DFT -> SST\n" +
+                            "5: SST -> 2DFT\n" +
                             "0: exit");
         try {
-            modelInt = Integer.parseInt(sc.nextLine());
+            choice = Integer.parseInt(sc.nextLine());
         } catch (NumberFormatException e) {
             System.err.println("Invalid choice number. Please enter again.");
-            modelInt = -1;
+            choice = -1;
         }
 
         String modelDesc;
         String inputString;
         //construct model instance according to model input
-        while (modelInt != 0) {
-            if (modelInt >= 1 && modelInt <= 3) {
+        while (choice != 0) {
+            if (choice >= 1 && choice <= 5) {
                 // initialise different transducer according to model choice
-                switch (modelInt) {
+                switch (choice) {
                     case 1:
                         //ask user for model encoding
-                        System.out.println("Please enter the encoding of transducer:");
+                        System.out.println("Please enter the encoding of 2DFT:");
                         modelDesc = sc.nextLine();
                         while (!decoder.vaildTDFT(modelDesc) && !modelDesc.equals("q")) {
                             System.err.println("Encoding invalid.");
@@ -117,7 +119,7 @@ public class Simulator {
                         break;
                     case 2:
                         //ask user for model encoding
-                        System.out.println("Please enter the encoding of transducer:");
+                        System.out.println("Please enter the encoding of MSOT:");
                         modelDesc = sc.nextLine();
                         // while (!decoder.vaildMSOT(modelDesc) && !modelDesc.equals("q")) {
                         //     System.err.println("Encoding invalid.");
@@ -192,7 +194,22 @@ public class Simulator {
                                 inputString = sc.nextLine();
                             }
                         }
-                        break;    
+                        break;
+                    case 4:
+                        //ask user for model encoding
+                        System.out.println("Please enter the encoding of 2DFT:");
+                        modelDesc = sc.nextLine();
+                        while (!decoder.vaildTDFT(modelDesc) && !modelDesc.equals("q")) {
+                            System.err.println("Encoding invalid.");
+                            System.out.println("Please enter the encoding of 2DFT:");
+                            modelDesc = sc.nextLine();
+                        }
+                        if (modelDesc.equals("q")) {
+                            break;
+                        }
+                        String SSTDesc = decoder.fromTDFTtoSST(modelDesc);
+                        System.err.println(SSTDesc);
+                        break;
                     default:
                         break;
                 }
@@ -201,16 +218,18 @@ public class Simulator {
             }
             
             // ask for model choice again
-            System.out.println("Please choose the type of the transducer model:\n" +
-                               "1: 2DFT\n" +
-                               "2: MSOT\n" +
-                               "3: SST\n" +
-                               "0: exit");
+            System.out.println("Please choose the type of the transducer model or type of translation function to enter:\n" +
+                                "1: 2DFT\n" +
+                                "2: MSOT\n" +
+                                "3: SST\n" +
+                                "4: 2DFT -> SST\n" +
+
+                                "0: exit");
             try {
-                modelInt = Integer.parseInt(sc.nextLine());
+                choice = Integer.parseInt(sc.nextLine());
             } catch (NumberFormatException e) {
                 System.err.println("Invalid choice number. Please enter again.");
-                modelInt = -1;
+                choice = -1;
             }
         }
         
