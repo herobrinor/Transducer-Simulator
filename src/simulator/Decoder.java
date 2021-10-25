@@ -9,6 +9,8 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.io.File;
+import java.io.FileOutputStream;
 
 /** 
  * A decoder to tranlate encoding to tranducer recognisable information
@@ -810,7 +812,7 @@ public class Decoder {
                 }
             }
         }
-        SSTencoding += "})";    
+        SSTencoding += "})";   
 
         return SSTencoding;
     }
@@ -823,5 +825,207 @@ public class Decoder {
     public String fromSSTtoTDFT(String encoding){
         //TODO: translation function
         return "";
+    }
+
+    public void generateSSTGraphPDF(String encoding) throws Exception {
+                //split the encoding string into different parts and storing in different arrays or hashmaps
+        String[] sets = encoding.split("\\},\\{");
+        String[] statesArray = sets[0].substring(2).split(",");
+        String[] inAlpha = sets[1].split(",");
+        String[] outAlpha = sets[2].split(",");
+        String[] varArray = sets[3].split(",");
+        String initialState = sets[4];
+        String[] outputFunc = sets[5].split("\\),\\(");
+        String[] tranFunc = sets[6].split("\\),\\(");
+        String[] updateFunc = sets[7].substring(0,sets[7].length()-2).split("\\),\\(");
+        HashMap<String, Integer> states = new HashMap<String, Integer>();
+        HashMap<String, Integer> inputAlphabet = new HashMap<String, Integer>();
+        HashSet<String> outputAlphabet = new HashSet<String>();
+        HashMap<String, Integer> variables = new HashMap<String, Integer>();
+        for (int i = 0; i < statesArray.length; i++) {
+            states.put(statesArray[i],i);
+        }
+        for (int i = 0; i < inAlpha.length; i++) {
+            inputAlphabet.put(inAlpha[i],i);
+        }
+        for (int i = 0; i < outAlpha.length; i++) {
+            outputAlphabet.add(outAlpha[i]);
+        }
+        for (int i = 0; i < varArray.length; i++) {
+            variables.put(varArray[i],i);
+        }
+
+        String[] partialOutput = new String[statesArray.length];
+        String[][] stateTransition = new String[statesArray.length][inAlpha.length];
+        String[][][] variableUpdate = new String[statesArray.length][inAlpha.length][varArray.length];
+
+        String[] singleTrans;
+
+        if (outputFunc.length == 1) {
+            singleTrans = outputFunc[0].substring(1,outputFunc[0].length()-1).split(",");
+            int state = states.get(singleTrans[0]);
+            partialOutput[state] = singleTrans[1];
+        } else {
+            for (int i = 0; i < outputFunc.length; i++) {
+                if (i == 0) {
+                    singleTrans = outputFunc[i].substring(1).split(",");
+                } else if (i == outputFunc.length-1) {
+                    singleTrans = outputFunc[i].substring(0,outputFunc[i].length()-1).split(",");
+                } else {
+                    singleTrans = outputFunc[i].split(",");
+                }           
+                int state = states.get(singleTrans[0]);
+                partialOutput[state] = singleTrans[1];
+            }
+        }
+        
+        if (tranFunc.length == 1) {
+            singleTrans = tranFunc[0].substring(1,tranFunc[0].length()-1).split(",");
+            int state = states.get(singleTrans[0]);
+            int symbol = inputAlphabet.get(singleTrans[1]);
+            stateTransition[state][symbol] = singleTrans[2];
+        } else {
+            for (int i = 0; i < tranFunc.length; i++) {
+                if (i == 0) {
+                     singleTrans = tranFunc[i].substring(1).split(",");
+                 } else if (i == tranFunc.length-1) {
+                    singleTrans = tranFunc[i].substring(0,tranFunc[i].length()-1).split(",");
+                } else {
+                     singleTrans = tranFunc[i].split(",");
+                }      
+                int state = states.get(singleTrans[0]);
+                int symbol = inputAlphabet.get(singleTrans[1]);
+                stateTransition[state][symbol] = singleTrans[2];
+            }
+        }
+        if (updateFunc.length == 1) {
+            singleTrans = updateFunc[0].substring(1,updateFunc[0].length()-1).split(",");
+            int state = states.get(singleTrans[0]);
+            int symbol = inputAlphabet.get(singleTrans[1]);
+            int var = variables.get(singleTrans[2]);
+            if (singleTrans.length == 3) {
+                variableUpdate[state][symbol][var] = "";
+            } else {
+                variableUpdate[state][symbol][var] = singleTrans[3];
+            }
+        } else {
+            for (int i = 0; i < updateFunc.length; i++) {
+                if (i == 0) {
+                    singleTrans = updateFunc[i].substring(1).split(",");
+                } else if (i == updateFunc.length-1) {
+                     singleTrans = updateFunc[i].substring(0,updateFunc[i].length()-1).split(",");
+                 } else {
+                     singleTrans = updateFunc[i].split(",");
+                }          
+                int state = states.get(singleTrans[0]);
+                int symbol = inputAlphabet.get(singleTrans[1]);
+                int var = variables.get(singleTrans[2]);
+                if (singleTrans.length == 3) {
+                    variableUpdate[state][symbol][var] = "";
+                } else {
+                    variableUpdate[state][symbol][var] = singleTrans[3];
+                }
+            }
+        }
+
+        for (int i = 0; i < variableUpdate.length; i++) {
+            for (int j = 0; j < variableUpdate[i].length; j++) {
+                Boolean[] count = new Boolean[varArray.length];
+                for (int k = 0; k < count.length; k++) {
+                    count[k] = false;
+                }
+                for (int index = 0; index < variableUpdate[i][j].length; index++) {
+                    for (String varString : variables.keySet()) {
+                        if (variableUpdate[i][j][index].contains(varString)) {
+                            if (count[variables.get(varString)] == false) {
+                                count[variables.get(varString)] = true;
+                            } else {
+                                throw new Exception("SST is not copyless.");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        String SSTLatex = "\\documentclass[landscape]{slides}\n"
+                        + "\\usepackage{tikz}\n"
+                        + "\\usepackage[landscape]{geometry}\n"
+                        + "\\begin{document}\n"
+                        + "\\usetikzlibrary{automata,positioning}\n"
+                        + "\\resizebox{\\linewidth}{!}{\n"
+                        + "\\begin{tikzpicture}[node distance=4cm,auto]\n";
+        
+        if (partialOutput[states.get(initialState)] == null || partialOutput[states.get(initialState)].equals("")) {
+            SSTLatex += "\\node[state without output,initial] (" + initialState + ") {$" + initialState + "$};\n";
+        } else {
+            SSTLatex += "\\node[state with output,initial] (" + initialState + ") {$" + initialState + "$ \\nodepart{lower} $" + partialOutput[states.get(initialState)] + "$};\n";
+        }
+        
+        String lastState = initialState;
+        for (int index = 0; index < statesArray.length; index++) {
+            if (!statesArray[index].equals(initialState)) {
+                if (partialOutput[index] == null) {
+                    SSTLatex += "\\node[state without output] (" + statesArray[index] + ") [right=of " + lastState + "] {$" + statesArray[index] + "$};\n";
+                    lastState = statesArray[index];
+                } else {
+                    SSTLatex += "\\node[state with output] (" + statesArray[index] + ") [right=of " + lastState + "] {$" + statesArray[index] + "$ \\nodepart{lower} $" + partialOutput[index] + "$};\n";
+                    lastState = statesArray[index];
+                }
+                
+            }
+        }
+        String[][] stsvu = new String[statesArray.length][statesArray.length];
+        for (int i = 0; i < stateTransition.length; i++) {
+            for (int j = 0; j <stateTransition[i].length; j++) {
+                if (stateTransition[i][j] != null) {
+                    if (stsvu[i][states.get(stateTransition[i][j])] == null) {
+                        stsvu[i][states.get(stateTransition[i][j])] = " " + inAlpha[j];
+                    } else {
+                        stsvu[i][states.get(stateTransition[i][j])] += " " + inAlpha[j];
+                    }
+                    for (int k = 0; k < variableUpdate[i][j].length; k++) {
+                        if (variableUpdate[i][j][k] != null && !variableUpdate[i][j][k].equals("")) {
+                            stsvu[i][states.get(stateTransition[i][j])] += " & " + varArray[k] + ":=" + variableUpdate[i][j][k] + " \\\\ ";
+                        }
+                    }
+                    stsvu[i][states.get(stateTransition[i][j])] += "\\hline ";
+                }
+            }
+        }
+        SSTLatex += "\\path[->] ";
+        for (int i = 0; i < statesArray.length; i++) {
+            SSTLatex += "(" + statesArray[i] + ") ";
+            for (int j = 0; j <statesArray.length; j++) {
+                if (stsvu[i][j] != null && !stsvu[i][j].equals("")) {
+                    if (i == j) {
+                        SSTLatex += "edge [loop] node [swap] {\\begin{tabular}{c|c} "
+                                  + stsvu[i][j].substring(0, stsvu[i][j].length()-8)
+                                  + "\\end{tabular}} (" + statesArray[j] + ")\n";
+                    } else {
+                        SSTLatex += "edge [bend left] node {\\begin{tabular}{c|c} "
+                                  + stsvu[i][j].substring(0, stsvu[i][j].length()-8)
+                                  + "\\end{tabular}} (" + statesArray[j] + ")\n";
+                    }
+                }
+            }
+        }
+        SSTLatex += ";\n"
+                  + "\\end{tikzpicture}\n"
+                  + "}\n"
+                  + "\\end{document}\n";
+        
+        byte[]sourceByte = SSTLatex.getBytes();
+        File file = new File("./graph/", "SSTGraph.tex");
+        if(file.exists()) {
+            file.delete();
+            file.createNewFile();
+        } else {
+            file.createNewFile();
+        }
+        FileOutputStream outStream = new FileOutputStream(file);
+        outStream.write(sourceByte);
+        outStream.close();
+        System.out.println("latex for a graph of SST is generated in ./graph/SSTGraph.tex");
     }
 }

@@ -1,6 +1,7 @@
 {
     "java.project.referencedLibraries": [
         "lib/**/*.jar",
-        "resource/junit-4.13.2.jar"
+        "resource/junit-4.13.2.jar",
+        "resource/JavaLatexReport-3.0.0-release.jar"
     ]
 }

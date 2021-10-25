@@ -210,6 +210,15 @@ public class Simulator {
                         String SSTDesc = decoder.fromTDFTtoSST(modelDesc);
                         System.out.println("Encoding of SST:");
                         System.out.println(SSTDesc);
+                        
+                        try {
+                            decoder.generateSSTGraphPDF(SSTDesc);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            System.err.println(e.getMessage());
+                            System.err.println("Construction Error. Please check encoding of SST.");
+                            break;
+                        }
                         break;
                     default:
                         break;
