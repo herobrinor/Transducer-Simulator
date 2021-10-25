@@ -31,5 +31,9 @@ edge formula: F{}{}=...
 exist a path:<
 
 compile instructions:
+for windows:
 javac -d bin .\src\simulator\transducer\*.java .\src\simulator\util\*.java .\src\simulator\*.java
+java -cp bin simulator.Simulator
+for linux:
+javac -d bin ./src/simulator/transducer/*.java ./src/simulator/util/*.java ./src/simulator/*.java
 java -cp bin simulator.Simulator

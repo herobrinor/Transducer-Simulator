@@ -11,6 +11,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /** 
  * A decoder to tranlate encoding to tranducer recognisable information
@@ -1016,16 +1019,23 @@ public class Decoder {
                   + "\\end{document}\n";
         
         byte[]sourceByte = SSTLatex.getBytes();
-        File file = new File("./graph/", "SSTGraph.tex");
-        if(file.exists()) {
-            file.delete();
-            file.createNewFile();
-        } else {
-            file.createNewFile();
+        try {
+            Path path = Paths.get("graph");
+            Files.createDirectories(path);
+            File file = new File("graph", "SSTGraph.tex");
+            if(file.exists()) {
+                file.delete();
+                file.createNewFile();
+            } else {
+                file.createNewFile();
+            }
+            FileOutputStream outStream = new FileOutputStream(file);
+            outStream.write(sourceByte);
+            outStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        FileOutputStream outStream = new FileOutputStream(file);
-        outStream.write(sourceByte);
-        outStream.close();
+        
         System.out.println("latex for a graph of SST is generated in ./graph/SSTGraph.tex");
     }
 }
