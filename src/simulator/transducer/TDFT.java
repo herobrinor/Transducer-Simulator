@@ -51,6 +51,9 @@ public class TDFT extends Transducer{
             currState = (String) transition[currStateNum][currInputNum][1];
             output += (String) transition[currStateNum][currInputNum][0];
             currPosition += (int) transition[currStateNum][currInputNum][2];
+            if (currPosition < 0 || currPosition >= stringArray.length) {
+                output = "";
+            }
         }
         return output;
     }
