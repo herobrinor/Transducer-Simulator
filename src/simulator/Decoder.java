@@ -268,12 +268,14 @@ public class Decoder {
                     count[k] = false;
                 }
                 for (int index = 0; index < variableUpdate[i][j].length; index++) {
-                    for (String varString : variables.keySet()) {
-                        if (variableUpdate[i][j][index].contains(varString)) {
-                            if (count[variables.get(varString)] == false) {
-                                count[variables.get(varString)] = true;
-                            } else {
-                                throw new Exception("SST is not copyless.");
+                    if (variableUpdate[i][j][index] != null) {
+                        for (String varString : variables.keySet()) {
+                            if (variableUpdate[i][j][index].contains(varString)) {
+                                if (count[variables.get(varString)] == false) {
+                                    count[variables.get(varString)] = true;
+                                } else {
+                                    throw new Exception("SST is not copyless.");
+                                }
                             }
                         }
                     }
@@ -351,376 +353,203 @@ public class Decoder {
             transition[state][symbol][1] = singleTrans[3];
             transition[state][symbol][2] = Integer.parseInt(singleTrans[4]);
         }
-        // add new transtion functions to make 2DFT start in left endmarker
-        int initialStateNum = states.get(initialState);
-        transition[initialStateNum][inAlpha.length][0] = "";
-        transition[initialStateNum][inAlpha.length][1] = initialState;
-        transition[initialStateNum][inAlpha.length][2] = 1;
-        // add new transtion functions to make 2DFT end in right endmarker
-        for (int i = 0; i < finalStatesArray.length; i++) {
-            int state = states.get(finalStatesArray[i]);
-            for (int j = 0; j < inAlpha.length; j++) {
-                transition[state][j][0] = "";
-                transition[state][j][1] = finalStatesArray[i];
-                transition[state][j][2] = 1;
-            }
-            transition[state][inAlpha.length+1][0] = "";
-            transition[state][inAlpha.length+1][1] = finalStatesArray[i]+"'";
-            transition[state][inAlpha.length+1][2] = 1;
-        }
+        // // add new transtion functions to make 2DFT start in left endmarker
+        // int initialStateNum = states.get(initialState);
+        // transition[initialStateNum][inAlpha.length][0] = "";
+        // transition[initialStateNum][inAlpha.length][1] = initialState;
+        // transition[initialStateNum][inAlpha.length][2] = 1;
+        // // add new transtion functions to make 2DFT end in right endmarker
+        // for (int i = 0; i < finalStatesArray.length; i++) {
+        //     int state = states.get(finalStatesArray[i]);
+        //     for (int j = 0; j < inAlpha.length; j++) {
+        //         transition[state][j][0] = "";
+        //         transition[state][j][1] = finalStatesArray[i];
+        //         transition[state][j][2] = 1;
+        //     }
+        //     transition[state][inAlpha.length+1][0] = "";
+        //     transition[state][inAlpha.length+1][1] = finalStatesArray[i]+"'";
+        //     transition[state][inAlpha.length+1][2] = 1;
+        // }
 
         //construct new states in SST
         //use decimal number to represent a N-base number as the states of SST
         //starting state is identity function form Q to Q U {m, qerr}.
         int base = states.size();
         //store visited states, exploring states, variable-update function, state-transition function and pratial output function
-        ArrayList<Integer> SSTState = new ArrayList<Integer>();
-        Queue<Integer> stateQueue = new LinkedList<Integer>();
+        ArrayList<Integer[]> SSTState = new ArrayList<Integer[]>();
+        Queue<Integer[]> stateQueue = new LinkedList<Integer[]>();
         Queue<String[]> sharedVarStateQueue = new LinkedList<String[]>();
         ArrayList<String> partialOutputFunc = new ArrayList<String>();
-        ArrayList<Integer[]> stateTransitionFunc =new ArrayList<Integer[]>();
+        ArrayList<Object[][]> stateTransitionFunc =new ArrayList<Object[][]>();
         ArrayList<String[][]> variableUpdateFunc =new ArrayList<String[][]>();
         HashMap<String, Integer> variables = new HashMap<String, Integer>();
-        String[] variableArray = new String[2*base-3];
+        String[] variableArray = new String[base-1];
         HashMap<String, Integer> sharedVariables = new HashMap<String, Integer>();
-        String[] sharedVariableArray = new String[4*base-10];// to be base-3 + base-2 before reducing 
-        ArrayList<Integer[]> sharedVariableCounts = new ArrayList<Integer[]>();
-        ArrayList<Integer[]> sharedVariableBack = new ArrayList<Integer[]>();
+        String[] sharedVariableArray = new String[2*base-5];// to be base-3 + base-2 before reducing 
         ArrayList<String[]> sharedVariableStates = new ArrayList<String[]>();
         ArrayList<String[][]> sharedVariableUpdateFunc =new ArrayList<String[][]>();
+        ArrayList<Integer[]> newStateArrayList = new ArrayList<Integer[]>();
+        ArrayList<String[]> newSharedVarStateArrayList = new ArrayList<String[]>();
         //initalise variable set in SST
         char varNum1 = 65;//symbol A
-        char varNum2 = (char) (varNum1 + 1);
         int count = 0;
-        while (count < base-2) {
-            String var1 = String.valueOf(varNum1);
-            String var2 = String.valueOf(varNum2);
-            if (outputAlphabet.contains(var1)) {
-                varNum1 += 1;
-                varNum2 += 1;
-            } else {
-                if (outputAlphabet.contains(var2)) {
-                    varNum2 += 1;
-                } else {
-                    variableArray[2*count] = var1;
-                    variables.put(var1, count);
-                    variableArray[2*count+1] = var2;
-                    variables.put(var2, count);
-                    varNum1 = (char) (varNum2 + 1);
-                    varNum2 = (char) (varNum1 + 1);
-                    count += 1;
-                }
-            }
-        }
-        while (count == base-2) {
+        while (count < base-1) {
             String var1 = String.valueOf(varNum1);
             if (outputAlphabet.contains(var1)) {
                 varNum1 += 1;
             } else {
-                variableArray[2*count] = var1;
+                variableArray[count] = var1;
                 variables.put(var1, count);
-                varNum1 += 1;
+                varNum1 = (char) (varNum1 + 1);
                 count += 1;
             }
         }
         //initalise shared variable set in SST
-        varNum2 = (char) (varNum1 + 1);
         count = 0;
         while (count < 2*base-5) {
             String var1 = String.valueOf(varNum1);
-            String var2 = String.valueOf(varNum2);
             if (outputAlphabet.contains(var1)) {
                 varNum1 += 1;
-                varNum2 += 1;
             } else {
-                if (outputAlphabet.contains(var2)) {
-                    varNum2 += 1;
-                } else {
-                    sharedVariableArray[2*count] = var1;
-                    sharedVariables.put(var1, count);
-                    sharedVariableArray[2*count+1] = var2;
-                    sharedVariables.put(var2, count);
-                    varNum1 = (char) (varNum2 + 1);
-                    varNum2 = (char) (varNum1 + 1);
-                    count += 1;
-                }
+                sharedVariableArray[count] = var1;
+                sharedVariables.put(var1, count);
+                varNum1 = (char) (varNum1 + 1);
+                count += 1;
             }
         }
         //simulate 2DFT on left endmarker to construct initial state of SST
-        int nextState = 0;
+        Integer[] nextState = new Integer[base-1];
         String[] varUpLEM = new String[variableArray.length];
         // state except m
         for (int i = 0; i < base-2; i++) {
             Object[] transfunc = transition[i][inAlpha.length];
             if (transfunc[2] != null && (int)transfunc[2] == 1) {//careful about 0
-                nextState += states.get((String)transfunc[1]) * Math.pow(base, i);
-                varUpLEM[2*i] = (String)transfunc[0];
-                varUpLEM[2*i+1] = (String)transfunc[0];
+                nextState[i] = states.get((String)transfunc[1]);
+                varUpLEM[i] = (String)transfunc[0];
             } else {//map to qerr
-                nextState += (base-1) * Math.pow(base, i);
-                varUpLEM[2*i] = "";
-                varUpLEM[2*i+1] = "";
+                nextState[i] = base-1;
+                varUpLEM[i] = "";
             }
         }
         // state m
-        nextState += states.get(initialState) * Math.pow(base, base-2);
-        varUpLEM[2*(base-2)] = "";
-        int firstState = nextState;
+        nextState[base-2] = states.get(initialState);
+        varUpLEM[base-2] = "";
+        Integer[] firstState = nextState;
         //compute stateTransitionFunc and variable-update function combined with simulating on left endmarker
         String[][] varUp = new String[inAlpha.length][variableArray.length];
         String[][] sharedVarUp = new String[inAlpha.length][sharedVariableArray.length];
-        Integer[] stateUp = new Integer[inAlpha.length];
+        Object[][] stateUp = new Object[inAlpha.length][2];
+        String[] sharedVarState = new String[base-2];
         for (int i = 0; i < inAlpha.length; i++) {//for every input Symbol
-            nextState = 0;
-            Integer[] merging = new Integer[base-2];
-            String[] sharedVarState = new String[base-2];
-            int[] sharedVarCount = new int[2*base-5];
-            Integer[] sharedVarBack = new Integer[2*base-5];
-            int[] backStateCount = new int[base-2];
+            nextState = new Integer[base-1];
+            String[] newSharedVarState = new String[base-2];
             // state except m
             for (int j = 0; j < base-2; j++) {//for every state
                 String newVal1 = "";
-                String newVal2 = "";
                 Object[] transfunc = transition[j][i];
                 //careful about 0
                 if (transfunc[2] != null && (int)transfunc[2] == 1) {
-                    nextState += states.get((String)transfunc[1]) * Math.pow(base, j);
+                    nextState[j] = states.get((String)transfunc[1]);
                     newVal1 = (String)transfunc[0];
-                    newVal2 = (String)transfunc[0];
-                    varUp[i][2*j] = newVal1;
-                    varUp[i][2*j+1] = newVal2;                        
+                    varUp[i][j] = newVal1;                      
                 } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
+                    //loop to acquire f(q) which is the forward state from q
                     while (true) {
                         newVal1 += (String)transfunc[0];
-                        newVal2 += (String)transfunc[0];
                         int leftState = states.get((String)transfunc[1]);
-                        merging[leftState] += 1;
-                        newVal1 += varUpLEM[2*leftState];
-                        newVal2 += varUpLEM[2*leftState+1];
-                        int tempCurrState = firstState;
-                        for (int index = 0; index < leftState; index++) {
-                            tempCurrState = tempCurrState / base;
-                        }
-                        int backState = tempCurrState % base;
+                        newVal1 += varUpLEM[leftState];
+                        int backState = firstState[leftState];
                         transfunc = transition[backState][i];
                         if (transfunc[2] != null && (int)transfunc[2] == 1) {
                             newVal1 += transfunc[0];
-                            newVal2 += transfunc[0];
-                            varUp[i][2*j] = newVal1;
-                            varUp[i][2*j+1] = newVal2;
-                            nextState += states.get((String)transfunc[1]) * Math.pow(base, j);
+                            varUp[i][j] = newVal1;
+                            nextState[j] = states.get((String)transfunc[1]);
                             break;
                         } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
                             continue;
                         } else {
-                            varUp[i][2*j] = "";
-                            varUp[i][2*j+1] = "";
-                            nextState += (base-1) * Math.pow(base, j);
+                            varUp[i][j] = "";
+                            nextState[j] = base-1;
                             break;
                         }   
                     }
                 } else {//map to qerr
-                    nextState += (base-1) * Math.pow(base, j);
+                    nextState[j] = base-1;
                     varUp[i][j] = "";
                 }
             }
-            // check for state merging and update shared variables
-            for (int j = 0; j < merging.length; j++) {
-                if (merging[j] > 1) {
-                    int sharedVar = base;
-                    for (int index = 0; index < sharedVarCount.length; index++) {
-                        if (sharedVarCount[index] == 0) {
-                            sharedVar = index;
-                        }
-                    }
-                    Integer[] sVars = new Integer[0];
-                    if (sharedVarState[j] != null) {
-                        char[] varsCharArray = sharedVarState[j].toCharArray();
-                        sVars = new Integer[varsCharArray.length];
-                        for (int index = 0; index < varsCharArray.length; index++) {
-                            sVars[index] = sharedVariables.get(String.valueOf(varsCharArray[index]));
-                        }
-
-                        int tempCurrState = firstState;
-                        for (int index = 0; index < j; index++) {
-                            tempCurrState = tempCurrState / base;
-                        }
-                        int backState = tempCurrState % base;
-                        sharedVarBack[sharedVar] = backState;
-                        backStateCount[backState] += 1;
-                    } else {
-                        sharedVarBack[sharedVar] = null;
-                    }
-                    
-                    for (int currState = 0; currState < transition.length; currState++) {
-                        int leftState = states.get((String)transition[currState][i][1]);
-                        if (leftState == j) {
-                            for (int index = 0; index < sVars.length; index++) {
-                                sharedVarCount[sVars[index]]++;
-                            }
-                            sharedVarCount[sharedVar]++;
-                            int position = varUp[i][2*currState].indexOf(variableArray[states.get((String)transition[j][i][1])]);
-                            if (position >= 1) {
-                                varUp[i][2*currState] = varUp[i][2*currState].substring(0,position);
-                                varUp[i][2*currState+1] = varUp[i][2*currState+1].substring(0,position);
-                                if (sharedVarState[j] != null) {
-                                    sharedVarState[currState] = sharedVariableArray[sharedVar] + sharedVarState[j];
-                                } else {
-                                    sharedVarState[currState] = sharedVariableArray[sharedVar];
-                                }
-                            } else {
-                                varUp[i][2*j] = "";
-                                varUp[i][2*j+1] = "";
-                            }
-                        }
-                    }
-                    sharedVarUp[i][2*sharedVar] = variableArray[states.get((String)transition[j][i][1])];
-                    sharedVarUp[i][2*sharedVar+1] = variableArray[states.get((String)transition[j][i][1])];
-                }
-            }
-
-            for (int j = 0; j < backStateCount.length; j++) {
-                if (backStateCount[j] == 1) {
-                    if (merging[j] == 0) {
-                        if (sharedVarState[j] != null) {
-                            for (int index = 0; index < sharedVarBack.length; index++) {
-                                if (sharedVarBack[index] == j) {
-                                    sharedVarUp[i][2*index] += variableArray[2*j] + sharedVarState[j];
-                                    sharedVarUp[i][2*index+1] += variableArray[2*j+1];
-                                    for (char var : sharedVarState[j].toCharArray()) {
-                                        int varNum = sharedVariables.get(String.valueOf(var));
-                                        sharedVarUp[i][2*index+1] += sharedVariableArray[2*varNum+1];
-                                    }
-                                }
-                            }
-                        } else {
-                            if (transition[j][i][2] != null && (int)transition[j][i][2] == 1) {
-                                for (int index = 0; index < sharedVarBack.length; index++) {
-                                    if (sharedVarBack[index] == j) {
-                                        sharedVarUp[i][2*index] += (String)transition[j][i][0];
-                                        sharedVarUp[i][2*index+1] += (String)transition[j][i][0];
-                                    }
-                                }
-                            } else if (transition[j][i][2] != null && (int)transition[j][i][2] == -1) {
-                                for (int index = 0; index < sharedVarBack.length; index++) {
-                                    if (sharedVarBack[index] == j) {
-                                        sharedVarUp[i][2*index] += variableArray[2*j];
-                                        sharedVarUp[i][2*index+1] += variableArray[2*j+1];
-                                    }
-                                }
-                            } else {
-                                throw new Exception("2DFT contains stay instruction. SST construction error.");
-                            }
-                        }
-                    } else if (merging[j] == 1) {
-
-                    } else {
-
-                    }
-
-
-                    
-                    
-                } else if (backStateCount[j] > 1) {
-                    if (sharedVarState[j] != null) {
-                        String sharedVar1 = "";
-                        String sharedVar2 = "";
-                        for (int index = 0; index < sharedVarCount.length; index++) {
-                            if (sharedVarCount[index] == 0) {
-                                sharedVar1 = sharedVariableArray[2*index];
-                                sharedVar2 = sharedVariableArray[2*index+1];
-                            }
-                        }
-                        for (int index = 0; index < sharedVarBack.length; index++) {
-                            if (sharedVarBack[index] == j) {
-                                
-                                    if (sharedVarState[j].contains(sharedVariableArray[2*index])) {
-                                        throw new Exception("2DFT is looping. SST construction error.");
-                                    } else {
-                                        sharedVarBack[index] = null;
-                                        for (int k = 0; k < sharedVarState.length; k++) {
-                                            if (sharedVarState[k].endsWith(sharedVariableArray[2*index])) {
-                                                sharedVarState[k] += sharedVar1;
-                                            } else if (sharedVarState[k].endsWith(sharedVariableArray[2*index+1])) {
-                                                sharedVarState[k] += sharedVar2;
-                                            }
-                                        }
-                                    }
-                                
-                                
-                            }
-                        }
-                    } else {
-                    
-                    }
-                }
-            }
             // state m
-            String newVal = varUpLEM[2*(base-2)];
-            int tempCurrState = firstState;
-            for (int index = 0; index < base-2; index++) {
-                tempCurrState = tempCurrState / base;
-            }
-            int mState = tempCurrState % base;
+            String newVal = varUpLEM[base-2];
+            int mState = firstState[base-2];
             Object[] mtransfunc = transition[mState][i];
             //careful about 0
             if (mtransfunc[2] != null && (int)mtransfunc[2] == 1) {
-                nextState += states.get(mtransfunc[1]) * Math.pow(base, base-2);
+                nextState[base-2] = states.get((String)mtransfunc[1]);
                 newVal += (String)mtransfunc[0];
-                varUp[i][2*(base-2)] = newVal;
+                varUp[i][base-2] = newVal;
             } else if (mtransfunc[2] != null && (int)mtransfunc[2] == -1) {
                 while (true) {
                     newVal = (String)mtransfunc[0];
                     int leftState = states.get(mtransfunc[1]);
-                    newVal += varUpLEM[2*leftState+1];
-                    tempCurrState = firstState;
-                    for (int index = 0; index < leftState; index++) {
-                        tempCurrState = tempCurrState / base;
-                    }
-                    int backState = tempCurrState % base;
+                    newVal += varUpLEM[leftState];
+                    int backState = firstState[leftState];
                     mtransfunc = transition[backState][i];
                     if (mtransfunc[2] != null && (int)mtransfunc[2] == 1) {
                         newVal += mtransfunc[0];
-                        varUp[i][2*(base-2)] = newVal;
-                        nextState += states.get((String)mtransfunc[1]) * Math.pow(base, base-2);
+                        varUp[i][base-2] = newVal;
+                        nextState[base-2] += states.get((String)mtransfunc[1]);
                         break;
                     } else if (mtransfunc[2] != null && (int)mtransfunc[2] == -1) {
                         continue;
                     } else {
                         newVal = "";
-                        varUp[i][2*(base-2)] = newVal;
-                        nextState += (base-1) * Math.pow(base, base-2);
+                        varUp[i][base-2] = newVal;
+                        nextState[base-2] = base-1;
                         break;
                     }
                 }
             } else {//map to qerr
-                nextState += (base-1) * Math.pow(base, base-2);
+                nextState[base-2] = base-1;
                 varUp[i][base-2] = "";
             }            
 
-            stateUp[i] = nextState;
-            if (!SSTState.contains(nextState) && !stateQueue.contains(nextState)) {
+            stateUp[i][0] = nextState;
+            stateUp[i][1] = newSharedVarState;
+            if (!isInList(SSTState,nextState) && !isInQueue(stateQueue,nextState)) {
                 stateQueue.offer(nextState);
-                sharedVarStateQueue.offer(sharedVarState);
+                sharedVarStateQueue.offer(newSharedVarState);
+                newStateArrayList.add(nextState);
+                newSharedVarStateArrayList.add(newSharedVarState);
             } else {
-                if (Arrays.equals(sharedVariableStates.get(SSTState.indexOf(nextState)),sharedVarState)) {
+                boolean exist = false;
+                for (int index = 0; index < SSTState.size(); index++) {
+                    if (Arrays.equals(SSTState.get(index),nextState) && Arrays.equals(sharedVariableStates.get(index),newSharedVarState)) {
+                        exist = true;
+                    }
+                }
+                for (int index = 0; index < newStateArrayList.size(); index++) {
+                    if (Arrays.equals(newStateArrayList.get(index),nextState) && Arrays.equals(newSharedVarStateArrayList.get(index),newSharedVarState)) {
+                        exist = true;
+                    }
+                }
+                if (!exist) {
                     stateQueue.offer(nextState);
-                    sharedVarStateQueue.offer(sharedVarState);
+                    sharedVarStateQueue.offer(newSharedVarState);
+                    newStateArrayList.add(nextState);
+                    newSharedVarStateArrayList.add(newSharedVarState);
                 }
             }
         }
         SSTState.add(firstState);
         stateTransitionFunc.add(stateUp);
         variableUpdateFunc.add(varUp);
+        sharedVariableUpdateFunc.add(sharedVarUp);
+        sharedVariableStates.add(sharedVarState);
 
         //compute partial output func
-        String output = variableArray[2*(base-2)];
+        String output = variableArray[base-2];
         String finalState = "m";
-        int tempCurrState = firstState;
-        for (int index = 0; index < base-2; index++) {
-            tempCurrState = tempCurrState / base;
-        }
-        int mState = tempCurrState % base;
+        int mState = firstState[base-2];
         Object[] mtransfunc = transition[mState][inAlpha.length+1];
         //careful about 0
         if (mtransfunc[2] != null && (int)mtransfunc[2] == 1) {
@@ -729,12 +558,11 @@ public class Decoder {
             while (true) {
                 output += (String)mtransfunc[0];
                 int leftState = states.get((String)mtransfunc[1]);
-                output += variableArray[2*leftState+1];
-                tempCurrState = firstState;
-                for (int index = 0; index < leftState; index++) {
-                    tempCurrState = tempCurrState / base;
+                output += variableArray[leftState];
+                if (sharedVarState[leftState] != null) {
+                    output += sharedVarState[leftState];
                 }
-                int backState = tempCurrState % base;
+                int backState = firstState[leftState];
                 mtransfunc = transition[backState][inAlpha.length+1];
                 if (mtransfunc[2] != null && (int)mtransfunc[2] == 1) {
                     output += mtransfunc[0];
@@ -759,122 +587,343 @@ public class Decoder {
         }
         //loop to find all states
         while (!stateQueue.isEmpty()) {
-            int currState = stateQueue.poll();
+            Integer[] currState = stateQueue.poll();
             SSTState.add(currState);
+            sharedVarState = sharedVarStateQueue.poll();
+            sharedVariableStates.add(sharedVarState);
             varUp = new String[inAlpha.length][variableArray.length];
-            stateUp = new Integer[inAlpha.length];
+            stateUp = new Object[inAlpha.length][2];
+            sharedVarUp = new String[inAlpha.length][sharedVariableArray.length];
+            int[] prevSharedVarCount = new int[2*base-5];
+            for (int i = 0; i < sharedVarState.length; i++) {
+                if (sharedVarState[i] != null) {
+                    char[] varsCharArray = sharedVarState[i].toCharArray();
+                    for (int k = 0; k < varsCharArray.length; k++) {
+                        prevSharedVarCount[sharedVariables.get(String.valueOf(varsCharArray[k]))]++;
+                    }
+                }
+            }
             for (int i = 0; i < inAlpha.length; i++) {//for every input Symbol
-                nextState = 0;
+                nextState = new Integer[base-1];
+                int[] merging = new int[base-2];
+                String[] newSharedVarState = new String[base-2];
+                int[] sharedVarCount = new int[2*base-5];
                 // state except m
                 for (int j = 0; j < base-2; j++) {
                     String newVal1 = "";
-                    String newVal2 = "";
                     Object[] transfunc = transition[j][i];
                     //careful about 0
                     if (transfunc[2] != null && (int)transfunc[2] == 1) {
-                        nextState += states.get((String)transfunc[1]) * Math.pow(base, j);
+                        nextState[j] = states.get((String)transfunc[1]);
                         newVal1 = (String)transfunc[0];
-                        newVal2 = (String)transfunc[0];
-                        varUp[i][2*j] = newVal1;
-                        varUp[i][2*j+1] = newVal2;                        
+                        varUp[i][j] = newVal1;                      
                     } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
                         while (true) {
                             newVal1 += (String)transfunc[0];
-                            newVal2 += (String)transfunc[0];
                             int leftState = states.get((String)transfunc[1]);
-                            newVal1 += variableArray[2*leftState];
-                            newVal2 += variableArray[2*leftState+1];
-                            tempCurrState = currState;
-                            for (int index = 0; index < leftState; index++) {
-                                tempCurrState = tempCurrState / base;
-                            }
-                            int backState = tempCurrState % base;
+                            merging[leftState] += 1;
+                            newVal1 += variableArray[leftState];
+                            int backState = currState[leftState];
                             transfunc = transition[backState][i];
                             if (transfunc[2] != null && (int)transfunc[2] == 1) {
                                 newVal1 += transfunc[0];
-                                newVal2 += transfunc[0];
-                                varUp[i][2*j] = newVal1;
-                                varUp[i][2*j+1] = newVal2;
-                                nextState += states.get((String)transfunc[1]) * Math.pow(base, j);
+                                varUp[i][j] = newVal1;
+                                nextState[j] = states.get((String)transfunc[1]);
                                 break;
                             } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
                                 continue;
                             } else {
                                 newVal1 = "";
-                                newVal2 = "";
-                                varUp[i][2*j] = newVal1;
-                                varUp[i][2*j+1] = newVal2;
-                                nextState += (base-1) * Math.pow(base, j);
+                                varUp[i][j] = newVal1;
+                                nextState[j] = base-1;
                             }                               
                             break;
                         }
                     } else {//map to qerr
-                        nextState += (base-1) * Math.pow(base, j);
+                        nextState[j] = base-1;
                         varUp[i][j] = "";
                     }
                 }
-                // state m
-                String newVal = variableArray[2*(base-2)];
-                tempCurrState = currState;
-                for (int index = 0; index < base-2; index++) {
-                    tempCurrState = tempCurrState / base;
-                }
-                mState = tempCurrState % base;
-                Object[] transfunc = transition[mState][i];
-                if (transfunc[2] != null && (int)transfunc[2] == 1) {
-                    nextState += states.get((String)transfunc[1]) * Math.pow(base, base-2);
-                    newVal += (String)transfunc[0];
-                    varUp[i][2*(base-2)] = newVal;
-                } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
-                    while (true) {
-                        newVal = (String)transfunc[0];
-                        int leftState = states.get((String)transfunc[1]);
-                        newVal += variableArray[2*leftState+1];
-                        tempCurrState = firstState;
-                        for (int index = 0; index < leftState; index++) {
-                            tempCurrState = tempCurrState / base;
+                // reduce the tree using number of variables that varUp contains
+                // if number of variables > 1 shared variables need to be used
+                for (int j = 0; j < base-2; j++) {
+                    char[] vars = varUp[i][j].toCharArray();
+                    int varcount = 0;
+                    for (int index = 0; index < vars.length; index++) {
+                        if (variables.containsKey(String.valueOf(vars[index]))) {
+                            varcount++;
                         }
-                        int backState = tempCurrState % base;
-                        transfunc = transition[backState][i];
-                        if (transfunc[2] != null && (int)transfunc[2] == 1) {
-                            newVal += transfunc[0];
-                            varUp[i][2*(base-2)] = newVal;
-                            nextState += states.get((String)transfunc[1]) * Math.pow(base, base-2);
-                            break;
-                        } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
+                        if (varcount <= 1) {
                             continue;
-                        } else {
-                            newVal = "";
-                            varUp[i][2*(base-2)] = newVal;
-                            nextState += (base-1) * Math.pow(base, base-2);
+                        } else if (varcount > 1) {
+                            int leftState = variables.get(String.valueOf(vars[index]));
+                            int sharedVar = base;
+                            for (int index2 = 0; index2 < sharedVarCount.length; index2++) {
+                                if (sharedVarCount[index2] == 0 && prevSharedVarCount[index2] == 0) {
+                                    sharedVar = index2;
+                                    break;
+                                }
+                            }
+                            int nextVar = index+1;
+                            for (int k = index+1; k < vars.length; k++) {
+                                if (variables.containsKey(String.valueOf(vars[k]))) {
+                                    break;
+                                } else {
+                                    nextVar++;
+                                }
+                            }
+
+
+                            if (sharedVarState[leftState] != null) {
+                                sharedVarUp[i][sharedVar] = varUp[i][j].substring(index,index+1);
+                                char[] varsCharArray = sharedVarState[leftState].toCharArray();
+                                Integer[] sVars = new Integer[varsCharArray.length];
+                                for (int k = 0; k < varsCharArray.length; k++) {
+                                    sVars[k] = sharedVariables.get(String.valueOf(varsCharArray[k]));
+                                }
+                                if (index+1<nextVar) {
+                                    sharedVarUp[i][sVars[varsCharArray.length-1]] = sharedVariableArray[sVars[varsCharArray.length-1]] + varUp[i][j].substring(index+1,nextVar);
+                                }
+                                varUp[i][j].replace(varUp[i][j].substring(index,nextVar), sharedVariableArray[sharedVar]+sharedVarState[leftState]);
+                                for (int index2 = 0; index2 < sVars.length; index2++) {
+                                    sharedVarCount[sVars[index2]]++;
+                                }
+                                sharedVarCount[sharedVar]++;
+                                for (int k = 0; k < base-2; k++) {
+                                    if (varUp[i][k].contains(varUp[i][j].substring(index,nextVar))) {
+                                        varUp[i][k].replace(varUp[i][j].substring(index,nextVar), sharedVariableArray[sharedVar]+sharedVarState[leftState]);
+                                        for (int index2 = 0; index2 < sVars.length; index2++) {
+                                            sharedVarCount[sVars[index2]]++;
+                                        }
+                                        sharedVarCount[sharedVar]++;
+                                    }
+                                }               
+                            } else {
+                                sharedVarUp[i][sharedVar] = varUp[i][j].substring(index,nextVar);
+                                varUp[i][j].replace(varUp[i][j].substring(index,nextVar), sharedVariableArray[sharedVar]);
+                                sharedVarCount[sharedVar]++;
+                                for (int k = 0; k < base-2; k++) {
+                                    if (varUp[i][k].contains(varUp[i][j].substring(index,nextVar))) {
+                                        varUp[i][k].replace(varUp[i][j].substring(index,nextVar), sharedVariableArray[sharedVar]);
+                                        sharedVarCount[sharedVar]++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (varcount == 1) {//check shared variable dependency when only moving back once
+                        int leftState = states.get((String)transition[j][i][1]);
+                        if (sharedVarState[leftState] != null) {
+                            newSharedVarState[j] = sharedVarState[leftState];
+                            int position = varUp[i][j].indexOf(variableArray[leftState]);
+                            if (position == 0) {
+                                varUp[i][j] = "";
+                            } else if (position > 0) {
+                                varUp[i][j] = varUp[i][j].substring(0,position);
+                            }
+                            String last = newSharedVarState[j].substring(newSharedVarState[j].length()-1,newSharedVarState[j].length());
+                            sharedVarUp[i][sharedVariables.get(last)] = last + (String)transition[currState[leftState]][i][0];
+                        }
+                    }
+
+                }
+                // compute newSharedVarState
+                for (int j = 0; j < base-2; j++) {
+                    boolean sharedFlag = false;
+                    int sharedPosition = 0;
+                    char[] updateArray = varUp[i][j].toCharArray();
+                    for (int k = 0; k < updateArray.length; k++) {
+                        if (sharedVariables.containsKey(String.valueOf(updateArray[k]))) {
+                            sharedFlag = true;
+                            sharedPosition = k;
                             break;
                         }
                     }
+                    if (sharedFlag) {
+                        newSharedVarState[j] = varUp[i][j].substring(sharedPosition);
+                        varUp[i][j] = varUp[i][j].substring(0, sharedPosition);
+                    }
+                }
+                // check for state merging and update shared variables
+                for (int j = 0; j < merging.length; j++) {
+                    if (merging[j] > 1) {
+                        int sharedVar = base;
+                        for (int index = 0; index < sharedVarCount.length; index++) {
+                            if (sharedVarCount[index] == 0 && prevSharedVarCount[index] == 0) {
+                                sharedVar = index;
+                                break;
+                            }
+                        }
+                        Integer[] sVars = new Integer[0];
+                        if (sharedVarState[j] != null) {//if there are previous shared variables existing
+                            char[] varsCharArray = sharedVarState[j].toCharArray();
+                            sVars = new Integer[varsCharArray.length];
+                            for (int index = 0; index < varsCharArray.length; index++) {
+                                sVars[index] = sharedVariables.get(String.valueOf(varsCharArray[index]));
+                            }
+                        }
+                        Boolean isFirst = true;
+                        for (int state = 0; state < transition.length; state++) {
+                            if (transition[state][i][2] != null && (int)transition[state][i][2] == -1) {
+                                int leftState = states.get((String)transition[state][i][1]);
+                                if (leftState == j) {
+                                    for (int index = 0; index < sVars.length; index++) {
+                                        sharedVarCount[sVars[index]]++;
+                                    }
+                                    sharedVarCount[sharedVar]++;
+                                    int position = varUp[i][state].indexOf(variableArray[states.get((String)transition[j][i][1])]);
+                                    if (position >= 1) {
+                                        varUp[i][state] = varUp[i][state].substring(0,position);
+                                    }
+                                    if (newSharedVarState[state] != null) {
+                                        newSharedVarState[state] = sharedVariableArray[sharedVar] + newSharedVarState[state];
+                                    } else {
+                                        newSharedVarState[state] = sharedVariableArray[sharedVar] ;
+                                    }
+                                    if (isFirst) {
+                                        if (!newSharedVarState[state].equals(sharedVariableArray[sharedVar])) {
+                                            sharedVarUp[i][sharedVar] = variableArray[states.get((String)transition[j][i][1])];
+                                        } else {
+                                            int backState = currState[j];
+                                            Object[] trans = transition[backState][i];
+                                            sharedVarUp[i][sharedVar] = variableArray[states.get((String)transition[j][i][1])] + (String)trans[0];
+                                        }
+                                        isFirst = false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                // reducing the tree using shared varibales appears only once, update older variable
+                for (int j = 0; j < sharedVarCount.length; j++) {
+                    if (sharedVarCount[j] == 1) {
+                        for (int k = 0; k < base-2; k++) {
+                            if (newSharedVarState[k].contains(sharedVariableArray[j])) {
+                                newSharedVarState[k].replace(sharedVariableArray[j], "");
+                                if (newSharedVarState[k].indexOf(sharedVariableArray[j]) == 0) {
+                                    varUp[i][k] = varUp[i][k] + sharedVariableArray[j];
+                                } else {
+                                    int oldVar = sharedVariables.get(String.valueOf(newSharedVarState[k].charAt(newSharedVarState[k].indexOf(sharedVariableArray[j])-1)));
+                                    if (sharedVarUp[i][oldVar] == null) {
+                                        sharedVarUp[i][oldVar] = "";
+                                    }
+                                    sharedVarUp[i][oldVar] += sharedVariableArray[j];
+                                }
+                            }
+                        }
+                    }
+                }
+                // reducing the tree using path appears only once
+                for (int j = 0; j < sharedVariableArray.length; j++) {
+                    if (sharedVarCount[j] > 0) {
+                        checkprev:while (true) {
+                            String prevShare = null;
+                            for (int k = 0; k < newSharedVarState.length; k++) {
+                                if (newSharedVarState[k] != null) {
+                                    int position = newSharedVarState[k].indexOf(sharedVariableArray[j]);
+                                    if (position == -1) {
+                                        break;
+                                    } else if (position == 0) {
+                                        if (prevShare == null) {
+                                            prevShare = "";
+                                        } else {
+                                            if (!prevShare.equals("")) {
+                                                break checkprev;
+                                            }
+                                        }
+                                    } else {
+                                        if (prevShare == null) {
+                                            prevShare = newSharedVarState[k].substring(position-1, position);
+                                        } else {
+                                            if (!prevShare.equals(newSharedVarState[k].substring(position-1, position))) {
+                                                break checkprev;
+                                            }
+                                        }
+                                        
+                                    }
+                                }
+                            }
+                            if (prevShare == null || prevShare.equals("")) {
+                                break checkprev;
+                            } else {
+                                int prevVarNum = sharedVariables.get(prevShare);
+                                if (sharedVarUp[i][prevVarNum] != null) {
+                                    sharedVarUp[i][j] = sharedVarUp[i][prevVarNum] + sharedVarUp[i][j];
+                                    sharedVarUp[i][prevVarNum] = "";
+                                };
+
+                                for (int k = 0; k < newSharedVarState.length; k++) {
+                                    if (newSharedVarState[k] != null && newSharedVarState[k].contains(prevShare+sharedVariableArray[j])) {
+                                        newSharedVarState[k] = newSharedVarState[k].replace(prevShare+sharedVariableArray[j], sharedVariableArray[j]);
+                                        sharedVarCount[prevVarNum]--;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                // state m
+                String newVal = variableArray[base-2];
+                mState = currState[base-2];
+                Object[] transfunc = transition[mState][i];
+                if (transfunc[2] != null && (int)transfunc[2] == 1) {
+                    nextState[base-2] = states.get((String)transfunc[1]);
+                    newVal += (String)transfunc[0];
+                    varUp[i][base-2] = newVal;
+                } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
+                    newVal += varUp[i][mState];
+                    if (newSharedVarState[mState] != null) {
+                        char[] varsCharArray = sharedVarState[mState].toCharArray();
+                        for (int index = 0; index < varsCharArray.length; index++) {
+                            int sharedVarNum = sharedVariables.get(String.valueOf(varsCharArray[index]));
+                            newVal += sharedVarUp[i][sharedVarNum];
+                            sharedVarUp[i][sharedVarNum] = null;
+                        }
+                    }
+                    varUp[i][base-2] = newVal;
+                    varUp[i][mState] = null;//used once in the 
+
                 } else {//map to qerr
-                    nextState += (base-1) * Math.pow(base, base-2);
+                    nextState[base-2] = base-1;
                     varUp[i][base-2] = "";
                 }
-                stateUp[i] = nextState;
-                if (!SSTState.contains(nextState) && !stateQueue.contains(nextState)) {
+                stateUp[i][0] = nextState;
+                stateUp[i][1] = newSharedVarState;
+                if (!isInList(SSTState,nextState) && !isInQueue(stateQueue,nextState)) {
                     stateQueue.offer(nextState);
-                    sharedVarStateQueue.offer(sharedVarState);
+                    sharedVarStateQueue.offer(newSharedVarState);
+                    newStateArrayList.add(nextState);
+                    newSharedVarStateArrayList.add(newSharedVarState);
                 } else {
-                    if (Arrays.equals(sharedVariableStates.get(SSTState.indexOf(nextState)),sharedVarState)) {
+                    boolean exist = false;
+                    for (int index = 0; index < SSTState.size(); index++) {
+                        if (Arrays.equals(SSTState.get(index),nextState) && Arrays.equals(sharedVariableStates.get(index),newSharedVarState)) {
+                            exist = true;
+                        }
+                    }
+                    for (int index = 0; index < newStateArrayList.size(); index++) {
+                        if (Arrays.equals(newStateArrayList.get(index),nextState) && Arrays.equals(newSharedVarStateArrayList.get(index),newSharedVarState)) {
+                            exist = true;
+                        }
+                    }
+                    if (!exist) {
                         stateQueue.offer(nextState);
-                        sharedVarStateQueue.offer(sharedVarState);
+                        sharedVarStateQueue.offer(newSharedVarState);
+                        newStateArrayList.add(nextState);
+                        newSharedVarStateArrayList.add(newSharedVarState);
                     }
                 }
             }
             stateTransitionFunc.add(stateUp);
             variableUpdateFunc.add(varUp);
+            sharedVariableUpdateFunc.add(sharedVarUp);
+            
             //compute partial output func
-            output = variableArray[2*(base-2)];
+            output = variableArray[base-2];
             finalState = "m";
-            tempCurrState = currState;
-            for (int index = 0; index < base-2; index++) {
-                tempCurrState = tempCurrState / base;
-            }
-            mState = tempCurrState % base;
+            mState = currState[base-2];
             Object[] transfunc = transition[mState][inAlpha.length+1];
             //careful about 0
             if (transfunc[2] != null && (int)transfunc[2] == 1) {
@@ -883,12 +932,11 @@ public class Decoder {
                 while (true) {
                     output += (String)transfunc[0];
                     int leftState = states.get((String)transfunc[1]);
-                    output += variableArray[2*leftState+1];
-                    tempCurrState = currState;
-                    for (int index = 0; index < leftState; index++) {
-                        tempCurrState = tempCurrState / base;
+                    output += variableArray[leftState];
+                    if (sharedVarState[leftState] != null) {
+                        output += sharedVarState[leftState];
                     }
-                    int backState = tempCurrState % base;
+                    int backState = currState[leftState];
                     transfunc = transition[backState][inAlpha.length+1];
                     if (transfunc[2] != null && (int)transfunc[2] == 1) {
                         output += transfunc[0];
@@ -941,6 +989,14 @@ public class Decoder {
                 SSTencoding += "," + variableArray[i];
             }
         }
+        for (int i = 0; i < sharedVariableArray.length; i++) {
+            if (isFirst) {
+                SSTencoding += sharedVariableArray[i];
+                isFirst = false;
+            } else {
+                SSTencoding += "," + sharedVariableArray[i];
+            }
+        }
         SSTencoding += "},";
         //add initial state
         SSTencoding += "{q0},";
@@ -963,14 +1019,21 @@ public class Decoder {
         SSTencoding += "{";
         isFirst = true;
         for (int index = 0; index < stateTransitionFunc.size(); index++) {
-            Integer[] toStates = stateTransitionFunc.get(index);
+            Object[][] toStates = stateTransitionFunc.get(index);
+
             for (int i = 0; i < toStates.length; i++) {
-                if (toStates[i] != null) {
+                if (toStates[i][0] != null) {
+                    int stateNum = 0;
+                    for (int j = 0; j < SSTState.size(); j++) {
+                        if (Arrays.equals(SSTState.get(j),(Integer[])toStates[i][0]) && Arrays.equals(sharedVariableStates.get(j), (String[])toStates[i][1])) {
+                            stateNum = j;
+                        }
+                    }
                     if (isFirst) {
-                        SSTencoding += "(q" + String.valueOf(index) + "," + inAlpha[i] + ",q" + SSTState.indexOf(toStates[i]) + ")";
+                        SSTencoding += "(q" + String.valueOf(index) + "," + inAlpha[i] + ",q" + stateNum + ")";
                         isFirst = false;
                     } else {
-                        SSTencoding += ",(q" + String.valueOf(index) + "," + inAlpha[i] + ",q" + SSTState.indexOf(toStates[i]) + ")";
+                        SSTencoding += ",(q" + String.valueOf(index) + "," + inAlpha[i] + ",q" + stateNum + ")";
                     }
                 }
             }   
@@ -995,8 +1058,36 @@ public class Decoder {
                 }
             }
         }
-        SSTencoding += "})";   
+        for (int index = 0; index < SSTState.size(); index++) {
+            String[][] update = sharedVariableUpdateFunc.get(index);
+            for (int i = 0; i < update.length; i++) {
+                for (int j = 0; j < update[i].length; j++) {
+                    if (update[i][j] != null) {
+                        if (isFirst) {
+                            SSTencoding += "(q" + String.valueOf(index) + "," + inAlpha[i] + "," + sharedVariableArray[j] + "," + update[i][j] + ")";
+                            isFirst = false;
+                        } else {
+                            SSTencoding += ",(q" + String.valueOf(index) + "," + inAlpha[i] + "," + sharedVariableArray[j] + "," + update[i][j] + ")";
+                        }
+                    }
+                }
+            }
+        }
+        SSTencoding += "})";
 
+        for (int index = 0; index < newStateArrayList.size(); index++) {
+            System.out.println(Arrays.toString(newStateArrayList.get(index)));
+        }
+        for (int index = 0; index < newSharedVarStateArrayList.size(); index++) {
+            System.out.println(Arrays.toString(newSharedVarStateArrayList.get(index)));
+        }
+        for (int index = 0; index < sharedVariableStates.size(); index++) {
+            System.out.println(Arrays.toString(SSTState.get(index)));
+        }
+        for (int index = 0; index < sharedVariableStates.size(); index++) {
+            System.out.println(Arrays.toString(sharedVariableStates.get(index)));
+        }
+        
         return SSTencoding;
     }
 
@@ -1119,7 +1210,7 @@ public class Decoder {
                 }
                 for (int index = 0; index < variableUpdate[i][j].length; index++) {
                     for (String varString : variables.keySet()) {
-                        if (variableUpdate[i][j][index].contains(varString)) {
+                        if (variableUpdate[i][j][index] != null && variableUpdate[i][j][index].contains(varString)) {
                             if (count[variables.get(varString)] == false) {
                                 count[variables.get(varString)] = true;
                             } else {
@@ -1149,10 +1240,10 @@ public class Decoder {
         for (int index = 0; index < statesArray.length; index++) {
             if (!statesArray[index].equals(initialState)) {
                 if (partialOutput[index] == null) {
-                    SSTLatex += "\\node[state without output] (" + statesArray[index] + ") [right=of " + lastState + "] {$" + statesArray[index] + "$};\n";
+                    SSTLatex += "\\node[state without output] (" + statesArray[index] + ") [right of=" + lastState + "] {$" + statesArray[index] + "$};\n";
                     lastState = statesArray[index];
                 } else {
-                    SSTLatex += "\\node[state with output] (" + statesArray[index] + ") [right=of " + lastState + "] {$" + statesArray[index] + "$ \\nodepart{lower} $" + partialOutput[index] + "$};\n";
+                    SSTLatex += "\\node[state with output] (" + statesArray[index] + ") [right of=" + lastState + "] {$" + statesArray[index] + "$ \\nodepart{lower} $" + partialOutput[index] + "$};\n";
                     lastState = statesArray[index];
                 }
                 
@@ -1217,5 +1308,23 @@ public class Decoder {
         }
         
         System.out.println("latex for a graph of SST is generated in ./graph/SSTGraph.tex");
+    }
+
+    public static boolean isInList(ArrayList<Integer[]> list, Integer[] candidate){
+        for(Integer[] item : list){
+            if (Arrays.equals(item, candidate)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isInQueue(Queue<Integer[]> queue, Integer[] candidate){
+        for(Integer[] item : queue){
+            if (Arrays.equals(item, candidate)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

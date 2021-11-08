@@ -59,12 +59,14 @@ public class SST extends Transducer{
         String newValue;
         String currSymbol;
         HashMap<String, String> variableValue = new HashMap<String, String>();
+        
 
         for (String variable: variables.keySet()) {
             variableValue.put(variable, new String(""));
         }
 
         for (int currPosition = 0; currPosition < stringArray.length; currPosition++) {
+            HashMap<String, String> newVariableValue = new HashMap<String, String>();
             currStateNum = states.get(currState);
             currInputNum = inputAlphabet.get(String.valueOf(stringArray[currPosition]));
             currState = stateTransition[currStateNum][currInputNum];
@@ -83,8 +85,9 @@ public class SST extends Transducer{
                         newValue = newValue.concat(currSymbol);
                     }
                 }
-                variableValue.replace(variable, newValue);
+                newVariableValue.put(variable, newValue);
             }
+            variableValue = newVariableValue;
         }
 
         currStateNum = states.get(currState);
