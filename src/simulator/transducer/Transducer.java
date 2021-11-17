@@ -27,7 +27,7 @@ public class Transducer {
     protected String endMarkerL = "^";
 
     // Right endmarker for the transducer.
-    protected String endMarkerR = "&";
+    protected String endMarkerR = "$";
 
     public Transducer(String initialState, HashMap<String, Integer> states, HashMap<String, Integer> inputAlphabet, HashSet<String> outputAlphabet) {
         this.initialState = initialState;

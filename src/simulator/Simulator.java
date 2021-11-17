@@ -96,6 +96,7 @@ public class Simulator {
                             // initialise a 2DFT instance
                             tdft = decoder.decodeTDFT(modelDesc);
                         } catch (Exception e) {
+                            e.printStackTrace();
                             System.err.println("Construction Error. Please check encoding of 2DFT.");
                             break;
                         }

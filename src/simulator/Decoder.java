@@ -55,7 +55,7 @@ public class Decoder {
             finalStates.add(finalStatesArray[i]);
         }
         inputAlphabet.put("^",inAlpha.length);
-        inputAlphabet.put("&",inAlpha.length+1);
+        inputAlphabet.put("$",inAlpha.length+1);
         //store transition function
         Object[][][] transition = new Object[statesArray.length][inAlpha.length+2][3];
         String[] singleTrans;
@@ -85,7 +85,7 @@ public class Decoder {
      */
     public Boolean vaildTDFT(String encoding) {
         // regular expression of 2DFT encoding
-        String pattern = "\\(\\{[A-Za-z0-9]*(,[A-Za-z0-9]*)*\\},\\{[A-Za-z0-9](,[A-Za-z0-9])*\\},\\{[A-Za-z0-9]*(,[A-Za-z0-9]*)*\\},\\{\\([A-Za-z0-9]*(,[A-Za-z0-9^&-]*){4}\\)(,\\([A-Za-z0-9]*(,[A-Za-z0-9^&-]*){4}\\))*\\},\\{[A-Za-z0-9]*\\},\\{[A-Za-z0-9]*(,[A-Za-z0-9]*)*\\}\\)";
+        String pattern = "\\(\\{[A-Za-z0-9]*(,[A-Za-z0-9]*)*\\},\\{[A-Za-z0-9](,[A-Za-z0-9])*\\},\\{[A-Za-z0-9]*(,[A-Za-z0-9]*)*\\},\\{\\([A-Za-z0-9]*(,[A-Za-z0-9^$-]*){4}\\)(,\\([A-Za-z0-9]*(,[A-Za-z0-9^$-]*){4}\\))*\\},\\{[A-Za-z0-9]*\\},\\{[A-Za-z0-9]*(,[A-Za-z0-9]*)*\\}\\)";
         Boolean validation = encoding.matches(pattern);
         return validation;
     }
@@ -335,7 +335,7 @@ public class Decoder {
         states.put("qerr",statesArray.length+finalStatesArray.length);
         //add endmarker
         inputAlphabet.put("^",inAlpha.length);
-        inputAlphabet.put("&",inAlpha.length+1);
+        inputAlphabet.put("$",inAlpha.length+1);
         //store transition function
         Object[][][] transition = new Object[statesArray.length][inAlpha.length+2][3];
         String[] singleTrans;
