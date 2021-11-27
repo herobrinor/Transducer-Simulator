@@ -48,6 +48,10 @@ public class TDFT extends Transducer{
         while (!finalStates.contains(currState) && currPosition >= 0 && currPosition < stringArray.length) {
             currStateNum = states.get(currState);
             currInputNum = inputAlphabet.get(String.valueOf(stringArray[currPosition]));
+            if (transition[currStateNum][currInputNum][1] == null) {
+                output = "!";
+                break;
+            }
             currState = (String) transition[currStateNum][currInputNum][1];
             output += (String) transition[currStateNum][currInputNum][0];
             currPosition += (int) transition[currStateNum][currInputNum][2];

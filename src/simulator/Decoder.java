@@ -497,7 +497,7 @@ public class Decoder {
                     if (mtransfunc[2] != null && (int)mtransfunc[2] == 1) {
                         newVal += mtransfunc[0];
                         varUp[i][base-2] = newVal;
-                        nextState[base-2] += states.get((String)mtransfunc[1]);
+                        nextState[base-2] = states.get((String)mtransfunc[1]);
                         break;
                     } else if (mtransfunc[2] != null && (int)mtransfunc[2] == -1) {
                         continue;
@@ -973,8 +973,9 @@ public class Decoder {
                         newSharedVarState[index] = null;
                     }
                 }
-                System.out.println(Arrays.toString(newSharedVarState));
-                System.out.println(Arrays.toString(sharedVarCount));
+                // System.out.println(Arrays.toString(newSharedVarState));
+                // System.out.println(Arrays.toString(sharedVarCount));
+                //check if this state is duplicated or was explored before
                 stateUp[i][0] = nextState;
                 stateUp[i][1] = newSharedVarState;
                 if (!isInList(SSTState,nextState) && !isInQueue(stateQueue,nextState)) {
@@ -1008,7 +1009,7 @@ public class Decoder {
             
             //compute partial output func
             output = variableArray[base-2];
-            System.out.println(output);
+            // System.out.println(output);
             finalState = "m";
             mState = currState[base-2];
             Object[] transfunc = transition[mState][inAlpha.length+1];
@@ -1165,21 +1166,21 @@ public class Decoder {
         }
         SSTencoding += "})";
 
-        for (int index = 0; index < newStateArrayList.size(); index++) {
-            System.out.println(Arrays.toString(newStateArrayList.get(index)));
-        }
-        for (int index = 0; index < newSharedVarStateArrayList.size(); index++) {
-            System.out.println(Arrays.toString(newSharedVarStateArrayList.get(index)));
-        }
-        for (int index = 0; index < sharedVariableStates.size(); index++) {
-            System.out.println(Arrays.toString(SSTState.get(index)));
-        }
-        for (int index = 0; index < sharedVariableStates.size(); index++) {
-            System.out.println(Arrays.toString(sharedVariableStates.get(index)));
-        }
-        for (int index = 0; index < partialOutputFunc.size(); index++) {
-            System.out.println(partialOutputFunc.get(index));
-        }
+        // for (int index = 0; index < newStateArrayList.size(); index++) {
+        //     System.out.println(Arrays.toString(newStateArrayList.get(index)));
+        // }
+        // for (int index = 0; index < newSharedVarStateArrayList.size(); index++) {
+        //     System.out.println(Arrays.toString(newSharedVarStateArrayList.get(index)));
+        // }
+        // for (int index = 0; index < sharedVariableStates.size(); index++) {
+        //     System.out.println(Arrays.toString(SSTState.get(index)));
+        // }
+        // for (int index = 0; index < sharedVariableStates.size(); index++) {
+        //     System.out.println(Arrays.toString(sharedVariableStates.get(index)));
+        // }
+        // for (int index = 0; index < partialOutputFunc.size(); index++) {
+        //     System.out.println(partialOutputFunc.get(index));
+        // }
         return SSTencoding;
     }
 
