@@ -629,7 +629,6 @@ public class Decoder {
                             newVal1 += variableArray[leftState];
                             int backState = currState[leftState];
                             if (backState == j) {//detect loop and map to qerr if found
-                                System.out.println("loop");
                                 nextState[j] = base-1;
                                 varUp[i][j] = "@";
                                 break;
@@ -1026,7 +1025,6 @@ public class Decoder {
             mState = currState[base-2];
             if (mState == base-1) {
                 finalState = "qerr";
-                output = "@";
             } else {
                 Object[] transfunc = transition[mState][inAlpha.length+1];
                 //careful about 0
