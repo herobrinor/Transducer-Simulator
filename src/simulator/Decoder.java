@@ -331,8 +331,9 @@ public class Decoder {
             finalStates.add(finalStatesArray[i]);
         }
         //add state m
-        states.put("m",statesArray.length+finalStatesArray.length-1);
-        states.put("qerr",statesArray.length+finalStatesArray.length);
+        states.put("m",statesArray.length);
+        states.put("qerr",statesArray.length+1);
+        states.put("qloop",statesArray.length+2);
         //add endmarker
         inputAlphabet.put("^",inAlpha.length);
         inputAlphabet.put("$",inAlpha.length+1);
@@ -373,7 +374,7 @@ public class Decoder {
 
         //construct new states in SST
         //use decimal number to represent a N-base number as the states of SST
-        //starting state is identity function form Q to Q U {m, qerr}.
+        //starting state is identity function form Q to Q U {m, qerr, qloop}.
         int base = states.size();
         //store visited states, exploring states, variable-update function, state-transition function and pratial output function
         ArrayList<Integer[]> SSTState = new ArrayList<Integer[]>();
@@ -383,9 +384,9 @@ public class Decoder {
         ArrayList<Object[][]> stateTransitionFunc =new ArrayList<Object[][]>();
         ArrayList<String[][]> variableUpdateFunc =new ArrayList<String[][]>();
         HashMap<String, Integer> variables = new HashMap<String, Integer>();
-        String[] variableArray = new String[base-1];
+        String[] variableArray = new String[base-2];
         HashMap<String, Integer> sharedVariables = new HashMap<String, Integer>();
-        String[] sharedVariableArray = new String[2*base-5];// to be base-3 + base-2 before reducing 
+        String[] sharedVariableArray = new String[2*base-7];// to be base-4 + base-3 before reducing 
         ArrayList<String[]> sharedVariableStates = new ArrayList<String[]>();
         ArrayList<String[][]> sharedVariableUpdateFunc =new ArrayList<String[][]>();
         ArrayList<Integer[]> newStateArrayList = new ArrayList<Integer[]>();
@@ -393,7 +394,7 @@ public class Decoder {
         //initalise variable set in SST
         char varNum1 = 65;//symbol A
         int count = 0;
-        while (count < base-1) {
+        while (count < base-2) {
             String var1 = String.valueOf(varNum1);
             if (outputAlphabet.contains(var1)) {
                 varNum1 += 1;
@@ -406,7 +407,7 @@ public class Decoder {
         }
         //initalise shared variable set in SST
         count = 0;
-        while (count < 2*base-5) {
+        while (count < 2*base-7) {
             String var1 = String.valueOf(varNum1);
             if (outputAlphabet.contains(var1)) {
                 varNum1 += 1;
@@ -418,33 +419,33 @@ public class Decoder {
             }
         }
         //simulate 2DFT on left endmarker to construct initial state of SST
-        Integer[] nextState = new Integer[base-1];
+        Integer[] nextState = new Integer[base-2];
         String[] varUpLEM = new String[variableArray.length];
         // state except m
-        for (int i = 0; i < base-2; i++) {
+        for (int i = 0; i < base-3; i++) {
             Object[] transfunc = transition[i][inAlpha.length];
             if (transfunc[2] != null && (int)transfunc[2] == 1) {//careful about 0
                 nextState[i] = states.get((String)transfunc[1]);
                 varUpLEM[i] = (String)transfunc[0];
             } else {//map to qerr
-                nextState[i] = base-1;
+                nextState[i] = base-2;
                 varUpLEM[i] = "";
             }
         }
         // state m
-        nextState[base-2] = states.get(initialState);
-        varUpLEM[base-2] = "";
+        nextState[base-3] = states.get(initialState);
+        varUpLEM[base-3] = "";
         Integer[] firstState = nextState;
         //compute stateTransitionFunc and variable-update function combined with simulating on left endmarker
         String[][] varUp = new String[inAlpha.length][variableArray.length];
         String[][] sharedVarUp = new String[inAlpha.length][sharedVariableArray.length];
         Object[][] stateUp = new Object[inAlpha.length][2];
-        String[] sharedVarState = new String[base-2];
+        String[] sharedVarState = new String[base-3];
         for (int i = 0; i < inAlpha.length; i++) {//for every input Symbol
-            nextState = new Integer[base-1];
-            String[] newSharedVarState = new String[base-2];
+            nextState = new Integer[base-2];
+            String[] newSharedVarState = new String[base-3];
             // state except m
-            for (int j = 0; j < base-2; j++) {//for every state
+            for (int j = 0; j < base-3; j++) {//for every state
                 String newVal1 = "";
                 Object[] transfunc = transition[j][i];
                 //careful about 0
@@ -469,24 +470,24 @@ public class Decoder {
                             continue;
                         } else {
                             varUp[i][j] = "";
-                            nextState[j] = base-1;
+                            nextState[j] = base-2;
                             break;
                         }   
                     }
                 } else {//map to qerr
-                    nextState[j] = base-1;
+                    nextState[j] = base-2;
                     varUp[i][j] = "";
                 }
             }
             // state m
-            String newVal = varUpLEM[base-2];
-            int mState = firstState[base-2];
+            String newVal = varUpLEM[base-3];
+            int mState = firstState[base-3];
             Object[] mtransfunc = transition[mState][i];
             //careful about 0
             if (mtransfunc[2] != null && (int)mtransfunc[2] == 1) {
-                nextState[base-2] = states.get((String)mtransfunc[1]);
+                nextState[base-3] = states.get((String)mtransfunc[1]);
                 newVal += (String)mtransfunc[0];
-                varUp[i][base-2] = newVal;
+                varUp[i][base-3] = newVal;
             } else if (mtransfunc[2] != null && (int)mtransfunc[2] == -1) {
                 while (true) {
                     newVal = (String)mtransfunc[0];
@@ -496,21 +497,21 @@ public class Decoder {
                     mtransfunc = transition[backState][i];
                     if (mtransfunc[2] != null && (int)mtransfunc[2] == 1) {
                         newVal += mtransfunc[0];
-                        varUp[i][base-2] = newVal;
-                        nextState[base-2] = states.get((String)mtransfunc[1]);
+                        varUp[i][base-3] = newVal;
+                        nextState[base-3] = states.get((String)mtransfunc[1]);
                         break;
                     } else if (mtransfunc[2] != null && (int)mtransfunc[2] == -1) {
                         continue;
                     } else {
                         newVal = "";
-                        varUp[i][base-2] = newVal;
-                        nextState[base-2] = base-1;
+                        varUp[i][base-3] = newVal;
+                        nextState[base-3] = base-2;
                         break;
                     }
                 }
             } else {//map to qerr
-                nextState[base-2] = base-1;
-                varUp[i][base-2] = "";
+                nextState[base-3] = base-2;
+                varUp[i][base-3] = "";
             }            
 
             stateUp[i][0] = nextState;
@@ -547,9 +548,9 @@ public class Decoder {
         sharedVariableStates.add(sharedVarState);
 
         //compute partial output func
-        String output = variableArray[base-2];
+        String output = variableArray[base-3];
         String finalState = "m";
-        int mState = firstState[base-2];
+        int mState = firstState[base-3];
         Object[] mtransfunc = transition[mState][inAlpha.length+1];
         //careful about 0
         if (mtransfunc[2] != null && (int)mtransfunc[2] == 1) {
@@ -594,7 +595,7 @@ public class Decoder {
             varUp = new String[inAlpha.length][variableArray.length];
             stateUp = new Object[inAlpha.length][2];
             sharedVarUp = new String[inAlpha.length][sharedVariableArray.length];
-            int[] prevSharedVarCount = new int[2*base-5];
+            int[] prevSharedVarCount = new int[2*base-7];
             for (int i = 0; i < sharedVarState.length; i++) {
                 if (sharedVarState[i] != null) {
                     char[] varsCharArray = sharedVarState[i].toCharArray();
@@ -604,12 +605,12 @@ public class Decoder {
                 }
             }
             for (int i = 0; i < inAlpha.length; i++) {//for every input Symbol
-                nextState = new Integer[base-1];
-                int[] merging = new int[base-2];
-                String[] newSharedVarState = new String[base-2];
-                int[] sharedVarCount = new int[2*base-5];
+                nextState = new Integer[base-2];
+                int[] merging = new int[base-3];
+                String[] newSharedVarState = new String[base-3];
+                int[] sharedVarCount = new int[2*base-7];
                 // state except m
-                for (int j = 0; j < base-2; j++) {
+                for (int j = 0; j < base-3; j++) {
                     String newVal1 = "";
                     Object[] transfunc = transition[j][i];
                     //careful about 0
@@ -633,6 +634,16 @@ public class Decoder {
                                 varUp[i][j] = "@";
                                 break;
                             }
+                            if (backState == base-1) {//map to qloop
+                                nextState[j] = base-1;
+                                varUp[i][j] = "@";
+                                break;
+                            }
+                            if (backState == base-2) {//map to qerr
+                                nextState[j] = base-2;
+                                varUp[i][j] = "";
+                                break;
+                            }
                             transfunc = transition[backState][i];
                             if (transfunc[2] != null && (int)transfunc[2] == 1) {
                                 newVal1 += transfunc[0];
@@ -644,20 +655,20 @@ public class Decoder {
                             } else {
                                 newVal1 = "";
                                 varUp[i][j] = newVal1;
-                                nextState[j] = base-1;
+                                nextState[j] = base-2;
                             }                               
                             break;
                         }
                     } else {//map to qerr
-                        nextState[j] = base-1;
+                        nextState[j] = base-2;
                         varUp[i][j] = "";
                     }
                 }
                 // reduce the tree using number of variables that varUp contains
                 // if number of variables > 1 shared variables need to be used
-                int[] varCountArray = new int[base-2];
+                int[] varCountArray = new int[base-3];
                 int maxVarNum = 0;
-                for (int j = 0; j < base-2; j++) {
+                for (int j = 0; j < base-3; j++) {
                     char[] vars = varUp[i][j].toCharArray();
                     int varcount = 0;
                     for (int index = 0; index < vars.length; index++) {
@@ -674,7 +685,7 @@ public class Decoder {
                 }
                 if (maxVarNum > 1) {
                     for (int m = 2; m < maxVarNum+1; m++) {
-                        for (int j = 0; j < base-2; j++) {
+                        for (int j = 0; j < base-3; j++) {
                             if (varCountArray[j] == 1) {//check shared variable dependency when only moving back once
                                 int leftState = states.get((String)transition[j][i][1]);
                                 if (sharedVarState[leftState] != null) {
@@ -737,7 +748,7 @@ public class Decoder {
                                                 sharedVarCount[sVars[index2]]++;
                                             }
                                             sharedVarCount[sharedVar]++;
-                                            for (int k = 0; k < base-2; k++) {
+                                            for (int k = 0; k < base-3; k++) {
                                                 if (k != j) {
                                                     if (varUp[i][k].contains(varUp[i][j].substring(index,nextVar))) {
                                                         if (newSharedVarState[k] != null) {
@@ -762,7 +773,7 @@ public class Decoder {
                                             }
                                             sharedVarUp[i][sharedVar] = varUp[i][j].substring(index,nextVar);
                                             sharedVarCount[sharedVar]++;
-                                            for (int k = 0; k < base-2; k++) {
+                                            for (int k = 0; k < base-3; k++) {
                                                 if (k != j) {
                                                     if (varUp[i][k].contains(varUp[i][j].substring(index,nextVar))) {
                                                         if (newSharedVarState[k] != null) {
@@ -783,7 +794,7 @@ public class Decoder {
                         }
                     }
                 } else {
-                    for (int j = 0; j < base-2; j++) {
+                    for (int j = 0; j < base-3; j++) {
                         if (varCountArray[j] == 1) {//check shared variable dependency when only moving back once
                             int leftState = states.get((String)transition[j][i][1]);
                             if (sharedVarState[leftState] != null) {
@@ -801,7 +812,7 @@ public class Decoder {
                     }
                 }
                 // compute newSharedVarState
-                // for (int j = 0; j < base-2; j++) {
+                // for (int j = 0; j < base-3; j++) {
                 //     boolean sharedFlag = false;
                 //     int sharedPosition = 0;
                 //     char[] updateArray = varUp[i][j].toCharArray();
@@ -871,7 +882,7 @@ public class Decoder {
                 // reducing the tree using shared varibales appears only once, update older variable
                 for (int j = 0; j < sharedVarCount.length; j++) {
                     if (sharedVarCount[j] == 1) {
-                        for (int k = 0; k < base-2; k++) {
+                        for (int k = 0; k < base-3; k++) {
                             if (newSharedVarState[k] != null) {
                                 if (newSharedVarState[k].contains(sharedVariableArray[j])) {
                                     newSharedVarState[k] = newSharedVarState[k].replace(sharedVariableArray[j], "");
@@ -939,21 +950,24 @@ public class Decoder {
                     }
                 }
                 // state m
-                String newVal = variableArray[base-2];
-                mState = currState[base-2];
-                if (mState == base-1) {
-                    nextState[base-2] = base-1;
-                    varUp[i][base-2] = "@";
+                String newVal = variableArray[base-3];
+                mState = currState[base-3];
+                if (mState == base-1) {//map to qloop
+                    nextState[base-3] = base-1;
+                    varUp[i][base-3] = "@";
+                } else if (mState == base-2) {//map to qerr
+                    nextState[base-3] = base-2;
+                    varUp[i][base-3] = "";
                 } else {
                     Object[] transfunc = transition[mState][i];
                     if (transfunc[2] != null && (int)transfunc[2] == 1) {
-                        nextState[base-2] = states.get((String)transfunc[1]);
+                        nextState[base-3] = states.get((String)transfunc[1]);
                         if ((String)transfunc[0] != null) {
                             newVal += (String)transfunc[0];
                         } else {
                             newVal += "";
                         }
-                        varUp[i][base-2] = newVal;
+                        varUp[i][base-3] = newVal;
                     } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
                         newVal += varUp[i][mState];
                         if (newSharedVarState[mState] != null) {
@@ -970,12 +984,12 @@ public class Decoder {
                                 sharedVarUp[i][sharedVarNum] = null;
                             }
                         }
-                        nextState[base-2] = nextState[mState];
-                        varUp[i][base-2] = newVal;
+                        nextState[base-3] = nextState[mState];
+                        varUp[i][base-3] = newVal;
                         varUp[i][mState] = "";//used once in the whole run
                     } else {//map to qerr
-                        nextState[base-2] = base-1;
-                        varUp[i][base-2] = "";
+                        nextState[base-3] = base-2;
+                        varUp[i][base-3] = "";
                     }
                 }
 
@@ -1019,12 +1033,16 @@ public class Decoder {
             sharedVariableUpdateFunc.add(sharedVarUp);
             
             //compute partial output func
-            output = variableArray[base-2];
+            output = variableArray[base-3];
             // System.out.println(output);
             finalState = "m";
-            mState = currState[base-2];
-            if (mState == base-1) {
+            mState = currState[base-3];
+            if (mState == base-2) {//qerr
                 finalState = "qerr";
+                output = "";
+            } else if (mState == base-1) {//qloop
+                finalState = "qloop";
+                output = "@";
             } else {
                 Object[] transfunc = transition[mState][inAlpha.length+1];
                 //careful about 0
@@ -1063,6 +1081,8 @@ public class Decoder {
             if (finalStates.contains(finalState)) {
                 partialOutputFunc.add(output);
             } else if (finalState.equals("qerr")) {
+                partialOutputFunc.add(output);
+            } else if (finalState.equals("qloop")) {
                 partialOutputFunc.add(output);
             } else {
                 partialOutputFunc.add("");
