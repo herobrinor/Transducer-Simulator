@@ -91,15 +91,20 @@ public class SST extends Transducer{
         }
 
         currStateNum = states.get(currState);
-        outputFormula = partialOutput[currStateNum].toCharArray();
-        for (int i = 0; i < outputFormula.length; i++) {
-            currSymbol = String.valueOf(outputFormula[i]);
-            if (variables.containsKey(currSymbol)) {
-                output = output.concat(variableValue.get(currSymbol));
-            } else { //outputAlphabet.contains(currSymbol)
-                output = output.concat(currSymbol);
+        if (partialOutput[currStateNum] != null && !partialOutput[currStateNum].equals("")) {
+            outputFormula = partialOutput[currStateNum].toCharArray();
+            for (int i = 0; i < outputFormula.length; i++) {
+                currSymbol = String.valueOf(outputFormula[i]);
+                if (variables.containsKey(currSymbol)) {
+                    output = output.concat(variableValue.get(currSymbol));
+                } else { //outputAlphabet.contains(currSymbol)
+                    output = output.concat(currSymbol);
+                }
             }
+        } else {
+            output = "";
         }
+
         return output;
     }
 

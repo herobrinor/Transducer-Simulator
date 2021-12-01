@@ -628,6 +628,12 @@ public class Decoder {
                             }
                             newVal1 += variableArray[leftState];
                             int backState = currState[leftState];
+                            if (backState == j) {//detect loop and map to qerr if found
+                                System.out.println("loop");
+                                nextState[j] = base-1;
+                                varUp[i][j] = "@";
+                                break;
+                            }
                             transfunc = transition[backState][i];
                             if (transfunc[2] != null && (int)transfunc[2] == 1) {
                                 newVal1 += transfunc[0];
@@ -936,38 +942,44 @@ public class Decoder {
                 // state m
                 String newVal = variableArray[base-2];
                 mState = currState[base-2];
-                Object[] transfunc = transition[mState][i];
-                if (transfunc[2] != null && (int)transfunc[2] == 1) {
-                    nextState[base-2] = states.get((String)transfunc[1]);
-                    if ((String)transfunc[0] != null) {
-                        newVal += (String)transfunc[0];
-                    } else {
-                        newVal += "";
-                    }
-                    varUp[i][base-2] = newVal;
-                } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
-                    newVal += varUp[i][mState];
-                    if (newSharedVarState[mState] != null) {
-                        char[] varsCharArray = newSharedVarState[mState].toCharArray();
-                        for (int index = 0; index < varsCharArray.length; index++) {
-                            int sharedVarNum = sharedVariables.get(String.valueOf(varsCharArray[index]));
-                            for (int m = 0; m < newSharedVarState.length; m++) {
-                                if (newSharedVarState[m] != null && newSharedVarState[m].contains(String.valueOf(varsCharArray[index]))) {
-                                    newSharedVarState[m] = newSharedVarState[m].replace(String.valueOf(varsCharArray[index]), "");
-                                }
-                            }
-                            newVal += sharedVarUp[i][sharedVarNum];
-                            sharedVarCount[sharedVarNum] = 0;
-                            sharedVarUp[i][sharedVarNum] = null;
-                        }
-                    }
-                    nextState[base-2] = nextState[mState];
-                    varUp[i][base-2] = newVal;
-                    varUp[i][mState] = "";//used once in the whole run
-                } else {//map to qerrF
+                if (mState == base-1) {
                     nextState[base-2] = base-1;
-                    varUp[i][base-2] = "";
+                    varUp[i][base-2] = "@";
+                } else {
+                    Object[] transfunc = transition[mState][i];
+                    if (transfunc[2] != null && (int)transfunc[2] == 1) {
+                        nextState[base-2] = states.get((String)transfunc[1]);
+                        if ((String)transfunc[0] != null) {
+                            newVal += (String)transfunc[0];
+                        } else {
+                            newVal += "";
+                        }
+                        varUp[i][base-2] = newVal;
+                    } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
+                        newVal += varUp[i][mState];
+                        if (newSharedVarState[mState] != null) {
+                            char[] varsCharArray = newSharedVarState[mState].toCharArray();
+                            for (int index = 0; index < varsCharArray.length; index++) {
+                                int sharedVarNum = sharedVariables.get(String.valueOf(varsCharArray[index]));
+                                for (int m = 0; m < newSharedVarState.length; m++) {
+                                    if (newSharedVarState[m] != null && newSharedVarState[m].contains(String.valueOf(varsCharArray[index]))) {
+                                        newSharedVarState[m] = newSharedVarState[m].replace(String.valueOf(varsCharArray[index]), "");
+                                    }
+                                }
+                                newVal += sharedVarUp[i][sharedVarNum];
+                                sharedVarCount[sharedVarNum] = 0;
+                                sharedVarUp[i][sharedVarNum] = null;
+                            }
+                        }
+                        nextState[base-2] = nextState[mState];
+                        varUp[i][base-2] = newVal;
+                        varUp[i][mState] = "";//used once in the whole run
+                    } else {//map to qerr
+                        nextState[base-2] = base-1;
+                        varUp[i][base-2] = "";
+                    }
                 }
+
                 for (int index = 0; index < newSharedVarState.length; index++) {
                     if (newSharedVarState[index] != null && newSharedVarState[index].equals("")) {
                         newSharedVarState[index] = null;
@@ -1012,39 +1024,47 @@ public class Decoder {
             // System.out.println(output);
             finalState = "m";
             mState = currState[base-2];
-            Object[] transfunc = transition[mState][inAlpha.length+1];
-            //careful about 0
-            if (transfunc[2] != null && (int)transfunc[2] == 1) {
-                if (transfunc[0] != null) {
-                    output += (String)transfunc[0];
-                }
-                finalState = (String)transfunc[1];
-            } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
-                while (true) {
-                    output += (String)transfunc[0];
-                    int leftState = states.get((String)transfunc[1]);
-                    output += variableArray[leftState];
-                    if (sharedVarState[leftState] != null) {
-                        output += sharedVarState[leftState];
-                    }
-                    int backState = currState[leftState];
-                    transfunc = transition[backState][inAlpha.length+1];
-                    if (transfunc[2] != null && (int)transfunc[2] == 1) {
-                        output += transfunc[0];
-                        finalState = (String)transfunc[1];
-                        break;
-                    } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
-                        continue;
-                    } else {
-                        output = "";
-                        break;
-                    }                            
-                }
-            } else {//map to qerr
+            if (mState == base-1) {
                 finalState = "qerr";
-                output = "";
+                output = "@";
+            } else {
+                Object[] transfunc = transition[mState][inAlpha.length+1];
+                //careful about 0
+                if (transfunc[2] != null && (int)transfunc[2] == 1) {
+                    if (transfunc[0] != null) {
+                        output += (String)transfunc[0];
+                    }
+                    finalState = (String)transfunc[1];
+                } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
+                    while (true) {
+                        output += (String)transfunc[0];
+                        int leftState = states.get((String)transfunc[1]);
+                        output += variableArray[leftState];
+                        if (sharedVarState[leftState] != null) {
+                            output += sharedVarState[leftState];
+                        }
+                        int backState = currState[leftState];
+                        transfunc = transition[backState][inAlpha.length+1];
+                        if (transfunc[2] != null && (int)transfunc[2] == 1) {
+                            output += transfunc[0];
+                            finalState = (String)transfunc[1];
+                            break;
+                        } else if (transfunc[2] != null && (int)transfunc[2] == -1) {
+                            continue;
+                        } else {
+                            output = "";
+                            break;
+                        }                            
+                    }
+                } else {//map to qerr
+                    finalState = "qerr";
+                    output = "";
+                }
             }
+
             if (finalStates.contains(finalState)) {
+                partialOutputFunc.add(output);
+            } else if (finalState.equals("qerr")) {
                 partialOutputFunc.add(output);
             } else {
                 partialOutputFunc.add("");
