@@ -1232,7 +1232,7 @@ public class Decoder {
         return "";
     }
 
-    public String firstMachine(String encoding) throws Exception{
+    public String seprateMachine(String encoding) throws Exception{
         //store SST
         //split the encoding string into different parts and storing in different arrays or hashmaps
         String[] sets = encoding.split("\\},\\{");
@@ -1357,16 +1357,14 @@ public class Decoder {
         }
 
         //initalise state representation of SST
-        String[] stateRepresentationArray = new String[statesArray.length];
+        String[][] stateRepresentationArray = new String[inAlpha.length+1][statesArray.length];
         HashMap<String, Integer> stateRepresentation = new HashMap<String, Integer>();
         char varNum1 = 65;//symbol A
         int count = 0;
-        while (count < statesArray.length) {
-            String var1 = String.valueOf(varNum1);
-            if (outputAlphabet.contains(var1) || inputAlphabet.containsKey(var1) || variables.containsKey(var1)) {
-                varNum1 += 1;
-            } else {
-                stateRepresentationArray[count] = var1;
+        for (int i = 0; i < inAlpha.length+1; i++) {
+            for (int j = 0; j < statesArray.length; j++) {
+                String var1 = String.valueOf(varNum1);
+                stateRepresentationArray[i][j] = var1;
                 stateRepresentation.put(var1, count);
                 varNum1 = (char) (varNum1 + 1);
                 count += 1;
@@ -1374,41 +1372,340 @@ public class Decoder {
         }
 
         //construct the first transducer A
-        String initialStateA = "i'";
-        String finalStateA = "f'";
+        String initialStateA = initialState;
+        String finalStateA = "f";
         HashMap<String, Integer> statesA = states;
-        statesA.put("i'", states.size());
-        statesA.put("f'", states.size()+1);
+        statesA.put("f", states.size());
         HashMap<String, Integer> inputAlphabetA = inputAlphabet;
+        inputAlphabetA.put("^", inAlpha.length);
+        inputAlphabetA.put("$", inAlpha.length+1);
         HashSet<String> outputAlphabetA = new HashSet<String>();
         HashSet<String> finalStatesA = new HashSet<String>();
         finalStatesA.add(finalStateA);
-        for (int i = 0; i < inAlpha.length; i++) {
-            outputAlphabetA.add(inAlpha[i]);
+        for (int i = 0; i < inAlpha.length+1; i++) {
+            for (int j = 0; j < statesArray.length; j++) {
+                outputAlphabetA.add(stateRepresentationArray[i][j]);
+            }
         }
-        for (int i = 0; i < stateRepresentationArray.length; i++) {
-            outputAlphabetA.add(stateRepresentationArray[i]);
-        }
-        Object[][][] transitionA = new Object[statesA.size()][inputAlphabetA.size()+2][3];
-        transitionA[statesA.size()-2][inputAlphabetA.size()] = new Object[]{"",initialState,1};
-
+        Object[][][] transitionA = new Object[statesA.size()][inputAlphabetA.size()][3];
         for (int i = 0; i < stateTransition.length; i++) {
             for (int j = 0; j < stateTransition[i].length; j++) {
                 if (stateTransition[i][j] != null && !stateTransition[i][j].equals("")) {
-                    transitionA[i][j] = new Object[]{inAlpha[j]+stateRepresentationArray[i],stateTransition[i][j],1};
+                    transitionA[i][j] = new Object[]{stateRepresentationArray[j][i],stateTransition[i][j],1};
+                }
+            }
+            transitionA[i][stateTransition[i].length+1] = new Object[]{stateRepresentationArray[stateTransition[i].length][i],finalStateA,1};
+        }
+
+        //construct the second transducer B
+        String initialStateB = "p0";
+        String finalStateB = "pf";
+        HashMap<String, Integer> statesB = new HashMap<String, Integer>();
+        for (int i = 0; i < varArray.length; i++) {
+            statesB.put(varArray[i]+"i",2*i);
+            statesB.put(varArray[i]+"o",2*i+1);
+        }
+        statesB.put(initialStateB,2*varArray.length);
+        statesB.put(finalStateB,2*varArray.length+1);
+        HashMap<String, Integer> inputAlphabetB = new HashMap<String, Integer>();
+        for (int i = 0; i < inAlpha.length+1; i++) {
+            for (int j = 0; j < statesArray.length; j++) {
+                inputAlphabetB.put(stateRepresentationArray[i][j],(i*statesArray.length)+j);
+            }
+        }
+        inputAlphabetB.put("^", (inAlpha.length+1)*statesArray.length);
+        inputAlphabetB.put("$", (inAlpha.length+1)*statesArray.length+1);
+        HashSet<String> outputAlphabetB = outputAlphabet;
+        HashSet<String> finalStatesB = new HashSet<String>();
+        finalStatesB.add(finalStateB);
+
+        Object[][][] transitionB = new Object[statesB.size()][inputAlphabetB.size()][3];
+        // triplet t = (a, q) (stateRepresentation)
+        // If p = p0 and a != $, then we set δ(p0, t) = (ε, p0, +1).
+        Object[] initialStateTrans = new Object[]{"",initialStateB,1};
+        for (int i = 0; i < inAlpha.length; i++) {
+            for (int j = 0; j < statesArray.length; j++) {
+                transitionB[2*varArray.length][(i*statesArray.length)+j] = initialStateTrans;
+            }
+        }
+
+        // If p = p0 and a = $, then if F(q) starts by uX with u in B* and X in χ ,
+        // then δ(p, t) = (u, Xi, -1).
+        for (int j = 0; j < statesArray.length; j++) {
+            char[] pOut = partialOutput[j].toCharArray();
+            String outString = "";
+            String var = "";
+            for (int index = 0; index < pOut.length; index++) {
+                String symbol = String.valueOf(pOut[index]);
+                if (outputAlphabet.contains(symbol)) {
+                    outString += symbol;
+                } else if (variables.containsKey(symbol)) {
+                    var = symbol;
+                    break;
+                }
+            }
+            if (var == null || var.equals("")) {
+                transitionB[2*varArray.length][(inAlpha.length*statesArray.length)+j] = new Object[]{outString,finalStateB,1};
+            } else {
+                transitionB[2*varArray.length][(inAlpha.length*statesArray.length)+j] = new Object[]{outString,var+"i",-1};
+            }
+        }
+
+        // If p = Xi, and t != $ then:
+        // - either (q, a)(X) = u in B* and does not contain any variable
+        // , and we set δ(p, t) = (u, Xo, +1),
+        // - or (q, a)(X) starts by uY with u in B* and Y in χ 
+        // , then δ(p, t) = (u, Yi, -1).
+        for (int index = 0; index < varArray.length; index++) {
+            for (int i = 0; i < inAlpha.length; i++) {
+                for (int j = 0; j < statesArray.length; j++) {
+                    char[] newVal = variableUpdate[j][i][index].toCharArray();
+                    String outString = "";
+                    String var = "";
+                    for (int k = 0; k < newVal.length; k++) {
+                        String symbol = String.valueOf(newVal[k]);
+                        if (outputAlphabet.contains(symbol)) {
+                            outString += symbol;
+                        } else if (variables.containsKey(symbol)) {
+                            var = symbol;
+                            break;
+                        }
+                    }
+                    if (var == null || var.equals("")) {
+                        transitionB[2*index][(i*statesArray.length)+j] = new Object[]{outString,varArray[index]+"o",1};
+                    } else {
+                        transitionB[2*index][(i*statesArray.length)+j] = new Object[]{outString,var+"i",-1};
+                    }
                 }
             }
         }
 
-        //construct the second transducer B
+        // If p = Xi, and t = ^ then δ(p, t) = (ε, Xo, +1).
+        for (int index = 0; index < varArray.length; index++) {
+            for (int j = 0; j < statesArray.length; j++) {
+                transitionB[2*index][inputAlphabetB.size()-2] = new Object[]{"",varArray[index]+"o",1};
+            }
+        }
 
+        // If p = Xo and a != $, then let Y be the unique variable of S such that X
+        // appears in ρ(q, a)(Y). Then we have:
+        // - either ρ(q, a)(Y) ends by Xu with u in B* and we set δ(p, t) = (u, Yo, +1),
+        // - or ρ(q，a)(Y) is of the form (B U χ)*XuX'(B U χ)* and we set δ(p, t) = (u, X'i, -1).
+        for (int index = 0; index < varArray.length; index++) {
+            for (int i = 0; i < inAlpha.length; i++) {
+                for (int j = 0; j < statesArray.length; j++) {
+                    for (int k = 0; k < varArray.length; k++) {
+                        int position = variableUpdate[j][i][k].indexOf(varArray[index]);
+                        if (position != -1) {
+                            char[] remainingVal = new char[0];
+                            if (position != variableUpdate[j][i][k].length()) {
+                                remainingVal = variableUpdate[j][i][k].substring(position+1).toCharArray();
+                            }
+                            String outString = "";
+                            String var = "";
+                            for (int l = 0; l < remainingVal.length; l++) {
+                                String symbol = String.valueOf(remainingVal[l]);
+                                if (outputAlphabet.contains(symbol)) {
+                                    outString += symbol;
+                                } else if (variables.containsKey(symbol)) {
+                                    var = symbol;
+                                    break;
+                                }
+                            }
+                            if (var == null || var.equals("")) {
+                                transitionB[2*index+1][(i*statesArray.length)+j] = new Object[]{outString,varArray[k]+"o",1};
+                            } else {
+                                transitionB[2*index+1][(i*statesArray.length)+j] = new Object[]{outString,var+"i",-1};
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
 
+        // If p = Xo, q in Qf and a = $ then:
+        // - either F(q) ends by Xu with u in B* and we set δ(p, t) = (u, pf, +1),
+        // - or F(q) is of the form (B U χ)*XuX'(B U χ)* and we set B(p; t) = (u, X'i, -1).
+        for (int index = 0; index < varArray.length; index++) {
+            for (int j = 0; j < statesArray.length; j++) {
+                int position = partialOutput[j].indexOf(varArray[index]);
+                if (position != -1) {
+                    char[] pOut = new char[0];
+                    if (position != partialOutput[j].length()) {
+                        pOut = partialOutput[j].substring(position+1).toCharArray();
+                    }
+                    String outString = "";
+                    String var = "";
+                    for (int k = 0; k < pOut.length; k++) {
+                        String symbol = String.valueOf(pOut[k]);
+                        if (outputAlphabet.contains(symbol)) {
+                            outString += symbol;
+                        } else if (variables.containsKey(symbol)) {
+                            var = symbol;
+                            break;
+                        }
+                    }
+                    if (var == null || var.equals("")) {
+                        transitionB[2*index+1][(inAlpha.length*statesArray.length)+j] = new Object[]{outString,finalStateB,1};
+                    } else {
+                        transitionB[2*index+1][(inAlpha.length*statesArray.length)+j] = new Object[]{outString,var+"i",-1};
+                    }
+                    break;
+                }
+            }
+        }
 
         // SST sst = new SST(initialState, states, inputAlphabet, outputAlphabet, variables, partialOutput, stateTransition, variableUpdate);
         // TDFT A = new TDFT(initialStateA, statesA, finalStatesA, inputAlphabetA, outputAlphabetA, transitionA);
         // TDFT B = new TDFT(initialStateB, statesB, finalStatesB, inputAlphabetB, outputAlphabetB, transitionB);
         
-        String output = "";
+
+        //construct 2DFT encoding for A
+        //initialise
+        String Aencoding = "(";
+        Boolean isFirst = true;// flag for first element in brackets
+        //add states set
+        Aencoding += "{";
+        for (String state : statesA.keySet()) {
+            if (isFirst) {
+                Aencoding += state;
+                isFirst = false;
+            } else {
+                Aencoding +=  "," + state;
+            }
+        }
+        Aencoding += "},{";
+        //add input and output alphbet
+        isFirst = true;
+        for (String symbol : inputAlphabetA.keySet()) {
+            if (symbol != "^" && symbol != "$") {
+                if (isFirst) {
+                    Aencoding += symbol;
+                    isFirst = false;
+                } else {
+                    Aencoding +=  "," + symbol;
+                }
+            }
+        }
+        Aencoding += "},{";
+        isFirst = true;
+        for (String symbol : outputAlphabetA) {
+            if (isFirst) {
+                Aencoding += symbol;
+                isFirst = false;
+            } else {
+                Aencoding +=  "," + symbol;
+            }
+        }
+        Aencoding += "},{";
+
+        //add variable sets
+        isFirst = true;
+        for (String state : statesA.keySet()) {
+            for (String symbol : inputAlphabetA.keySet()) {
+                int stateNum = statesA.get(state);
+                int symbolNum = inputAlphabetA.get(symbol);
+                Object[] singleTransition = transitionA[stateNum][symbolNum];
+                if (singleTransition[2] != null) {
+                    if (isFirst) {
+                        Aencoding += "(" + state + "," + symbol + "," + (String)singleTransition[0] + "," + (String)singleTransition[1] + "," + String.valueOf((Integer)singleTransition[2]) + ")";
+                        isFirst = false;
+                    } else {
+                        Aencoding += ",(" + state + "," + symbol + "," + (String)singleTransition[0] + "," + (String)singleTransition[1] + "," + String.valueOf((Integer)singleTransition[2]) + ")";
+                    }
+                }
+            }
+        }
+
+        //add initial state
+        Aencoding += "},{"+ initialStateA +"},{";
+
+        //add final state
+        isFirst = true;
+        for (String state : finalStatesA) {
+            if (isFirst) {
+                Aencoding += state;
+                isFirst = false;
+            } else {
+                Aencoding +=  "," + state;
+            }
+        }
+        Aencoding += "})";
+
+        //construct 2DFT encoding for B
+        //initialise
+        String Bencoding = "(";
+        isFirst = true;// flag for first element in brackets
+        //add states set
+        Bencoding += "{";
+        for (String state : statesB.keySet()) {
+            if (isFirst) {
+                Bencoding += state;
+                isFirst = false;
+            } else {
+                Bencoding +=  "," + state;
+            }
+        }
+        Bencoding += "},{";
+        //add input and output alphbet
+        isFirst = true;
+        for (String symbol : inputAlphabetB.keySet()) {
+            if (symbol != "^" && symbol != "$") {
+                if (isFirst) {
+                    Bencoding += symbol;
+                    isFirst = false;
+                } else {
+                    Bencoding +=  "," + symbol;
+                }
+            }
+        }
+        Bencoding += "},{";
+        isFirst = true;
+        for (String symbol : outputAlphabetB) {
+            if (isFirst) {
+                Bencoding += symbol;
+                isFirst = false;
+            } else {
+                Bencoding +=  "," + symbol;
+            }
+        }
+        Bencoding += "},{";
+
+        //add variable sets
+        isFirst = true;
+        for (String state : statesB.keySet()) {
+            for (String symbol : inputAlphabetB.keySet()) {
+                int stateNum = statesB.get(state);
+                int symbolNum = inputAlphabetB.get(symbol);
+                Object[] singleTransition = transitionB[stateNum][symbolNum];
+                if (singleTransition[2] != null) {
+                    if (isFirst) {
+                        Bencoding += "(" + state + "," + symbol + "," + (String)singleTransition[0] + "," + (String)singleTransition[1] + "," + String.valueOf((Integer)singleTransition[2]) + ")";
+                        isFirst = false;
+                    } else {
+                        Bencoding += ",(" + state + "," + symbol + "," + (String)singleTransition[0] + "," + (String)singleTransition[1] + "," + String.valueOf((Integer)singleTransition[2]) + ")";
+                    }
+                }
+            }
+        }
+
+        //add initial state
+        Bencoding += "},{"+ initialStateB +"},{";
+
+        //add final state
+        isFirst = true;
+        for (String state : finalStatesB) {
+            if (isFirst) {
+                Bencoding += state;
+                isFirst = false;
+            } else {
+                Bencoding +=  "," + state;
+            }
+        }
+        Bencoding += "})";
+
+        String output = Aencoding + "\n" + Bencoding;
         return output;
     }
 

@@ -214,7 +214,7 @@ public class Simulator {
                         } catch (Exception e) {
                             e.printStackTrace();
                             System.err.println(e.getMessage());
-                            System.err.println("Construction Error. Please check encoding of SST.");
+                            System.err.println("Construction Error. Please check encoding of 2DFT.");
                             break;
                         }
                         System.out.println("Encoding of SST:");
@@ -228,6 +228,30 @@ public class Simulator {
                             System.err.println("Construction Error. Please check encoding of SST.");
                             break;
                         }
+                        break;
+                    case 5:
+                        //ask user for model encoding
+                        System.out.println("Please enter the encoding of SST:");
+                        modelDesc = sc.nextLine();
+                        while (!decoder.vaildSST(modelDesc) && !modelDesc.equals("q")) {
+                            System.err.println("Encoding invalid.");
+                            System.out.println("Please enter the encoding of 2DFT:");
+                            modelDesc = sc.nextLine();
+                        }
+                        if (modelDesc.equals("q")) {
+                            break;
+                        }
+                        String TDFTDesc = "";
+                        try {
+                            TDFTDesc = decoder.seprateMachine(modelDesc);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            System.err.println(e.getMessage());
+                            System.err.println("Construction Error. Please check encoding of SST.");
+                            break;
+                        }
+                        System.out.println("Encoding of 2DFT:");
+                        System.out.println(TDFTDesc);
                         break;
                     default:
                         break;
