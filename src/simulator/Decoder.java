@@ -1232,6 +1232,186 @@ public class Decoder {
         return "";
     }
 
+    public String firstMachine(String encoding) throws Exception{
+        //store SST
+        //split the encoding string into different parts and storing in different arrays or hashmaps
+        String[] sets = encoding.split("\\},\\{");
+        String[] statesArray = sets[0].substring(2).split(",");
+        String[] inAlpha = sets[1].split(",");
+        String[] outAlpha = sets[2].split(",");
+        String[] varArray = sets[3].split(",");
+        String initialState = sets[4];
+        String[] outputFunc = sets[5].split("\\),\\(");
+        String[] tranFunc = sets[6].split("\\),\\(");
+        String[] updateFunc = sets[7].substring(0,sets[7].length()-2).split("\\),\\(");
+        HashMap<String, Integer> states = new HashMap<String, Integer>();
+        HashMap<String, Integer> inputAlphabet = new HashMap<String, Integer>();
+        HashSet<String> outputAlphabet = new HashSet<String>();
+        HashMap<String, Integer> variables = new HashMap<String, Integer>();
+        for (int i = 0; i < statesArray.length; i++) {
+            states.put(statesArray[i],i);
+        }
+        for (int i = 0; i < inAlpha.length; i++) {
+            inputAlphabet.put(inAlpha[i],i);
+        }
+        for (int i = 0; i < outAlpha.length; i++) {
+            outputAlphabet.add(outAlpha[i]);
+        }
+        for (int i = 0; i < varArray.length; i++) {
+            variables.put(varArray[i],i);
+        }
+
+        String[] partialOutput = new String[statesArray.length];
+        String[][] stateTransition = new String[statesArray.length][inAlpha.length];
+        String[][][] variableUpdate = new String[statesArray.length][inAlpha.length][varArray.length];
+
+        String[] singleTrans;
+
+        if (outputFunc.length == 1) {
+            singleTrans = outputFunc[0].substring(1,outputFunc[0].length()-1).split(",");
+            int state = states.get(singleTrans[0]);
+            partialOutput[state] = singleTrans[1];
+        } else {
+            for (int i = 0; i < outputFunc.length; i++) {
+                if (i == 0) {
+                    singleTrans = outputFunc[i].substring(1).split(",");
+                } else if (i == outputFunc.length-1) {
+                    singleTrans = outputFunc[i].substring(0,outputFunc[i].length()-1).split(",");
+                } else {
+                    singleTrans = outputFunc[i].split(",");
+                }           
+                int state = states.get(singleTrans[0]);
+                partialOutput[state] = singleTrans[1];
+            }
+        }
+        
+        if (tranFunc.length == 1) {
+            singleTrans = tranFunc[0].substring(1,tranFunc[0].length()-1).split(",");
+            int state = states.get(singleTrans[0]);
+            int symbol = inputAlphabet.get(singleTrans[1]);
+            stateTransition[state][symbol] = singleTrans[2];
+        } else {
+            for (int i = 0; i < tranFunc.length; i++) {
+                if (i == 0) {
+                     singleTrans = tranFunc[i].substring(1).split(",");
+                 } else if (i == tranFunc.length-1) {
+                    singleTrans = tranFunc[i].substring(0,tranFunc[i].length()-1).split(",");
+                } else {
+                     singleTrans = tranFunc[i].split(",");
+                }      
+                int state = states.get(singleTrans[0]);
+                int symbol = inputAlphabet.get(singleTrans[1]);
+                stateTransition[state][symbol] = singleTrans[2];
+            }
+        }
+        if (updateFunc.length == 1) {
+            singleTrans = updateFunc[0].substring(1,updateFunc[0].length()-1).split(",");
+            int state = states.get(singleTrans[0]);
+            int symbol = inputAlphabet.get(singleTrans[1]);
+            int var = variables.get(singleTrans[2]);
+            if (singleTrans.length == 3) {
+                variableUpdate[state][symbol][var] = "";
+            } else {
+                variableUpdate[state][symbol][var] = singleTrans[3];
+            }
+        } else {
+            for (int i = 0; i < updateFunc.length; i++) {
+                if (i == 0) {
+                    singleTrans = updateFunc[i].substring(1).split(",");
+                } else if (i == updateFunc.length-1) {
+                     singleTrans = updateFunc[i].substring(0,updateFunc[i].length()-1).split(",");
+                 } else {
+                     singleTrans = updateFunc[i].split(",");
+                }          
+                int state = states.get(singleTrans[0]);
+                int symbol = inputAlphabet.get(singleTrans[1]);
+                int var = variables.get(singleTrans[2]);
+                if (singleTrans.length == 3) {
+                    variableUpdate[state][symbol][var] = "";
+                } else {
+                    variableUpdate[state][symbol][var] = singleTrans[3];
+                }
+            }
+        }
+
+        for (int i = 0; i < variableUpdate.length; i++) {
+            for (int j = 0; j < variableUpdate[i].length; j++) {
+                Boolean[] count = new Boolean[varArray.length];
+                for (int k = 0; k < count.length; k++) {
+                    count[k] = false;
+                }
+                for (int index = 0; index < variableUpdate[i][j].length; index++) {
+                    if (variableUpdate[i][j][index] != null) {
+                        for (String varString : variables.keySet()) {
+                            if (variableUpdate[i][j][index].contains(varString)) {
+                                if (count[variables.get(varString)] == false) {
+                                    count[variables.get(varString)] = true;
+                                } else {
+                                    throw new Exception("SST is not copyless.");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        //initalise state representation of SST
+        String[] stateRepresentationArray = new String[statesArray.length];
+        HashMap<String, Integer> stateRepresentation = new HashMap<String, Integer>();
+        char varNum1 = 65;//symbol A
+        int count = 0;
+        while (count < statesArray.length) {
+            String var1 = String.valueOf(varNum1);
+            if (outputAlphabet.contains(var1) || inputAlphabet.containsKey(var1) || variables.containsKey(var1)) {
+                varNum1 += 1;
+            } else {
+                stateRepresentationArray[count] = var1;
+                stateRepresentation.put(var1, count);
+                varNum1 = (char) (varNum1 + 1);
+                count += 1;
+            }
+        }
+
+        //construct the first transducer A
+        String initialStateA = "i'";
+        String finalStateA = "f'";
+        HashMap<String, Integer> statesA = states;
+        statesA.put("i'", states.size());
+        statesA.put("f'", states.size()+1);
+        HashMap<String, Integer> inputAlphabetA = inputAlphabet;
+        HashSet<String> outputAlphabetA = new HashSet<String>();
+        HashSet<String> finalStatesA = new HashSet<String>();
+        finalStatesA.add(finalStateA);
+        for (int i = 0; i < inAlpha.length; i++) {
+            outputAlphabetA.add(inAlpha[i]);
+        }
+        for (int i = 0; i < stateRepresentationArray.length; i++) {
+            outputAlphabetA.add(stateRepresentationArray[i]);
+        }
+        Object[][][] transitionA = new Object[statesA.size()][inputAlphabetA.size()+2][3];
+        transitionA[statesA.size()-2][inputAlphabetA.size()] = new Object[]{"",initialState,1};
+
+        for (int i = 0; i < stateTransition.length; i++) {
+            for (int j = 0; j < stateTransition[i].length; j++) {
+                if (stateTransition[i][j] != null && !stateTransition[i][j].equals("")) {
+                    transitionA[i][j] = new Object[]{inAlpha[j]+stateRepresentationArray[i],stateTransition[i][j],1};
+                }
+            }
+        }
+
+        //construct the second transducer B
+
+
+
+        // SST sst = new SST(initialState, states, inputAlphabet, outputAlphabet, variables, partialOutput, stateTransition, variableUpdate);
+        // TDFT A = new TDFT(initialStateA, statesA, finalStatesA, inputAlphabetA, outputAlphabetA, transitionA);
+        // TDFT B = new TDFT(initialStateB, statesB, finalStatesB, inputAlphabetB, outputAlphabetB, transitionB);
+        
+        String output = "";
+        return output;
+    }
+
     public void generateSSTGraphPDF(String encoding) throws Exception {
                 //split the encoding string into different parts and storing in different arrays or hashmaps
         String[] sets = encoding.split("\\},\\{");
