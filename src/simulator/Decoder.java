@@ -1560,6 +1560,52 @@ public class Decoder {
         // TDFT A = new TDFT(initialStateA, statesA, finalStatesA, inputAlphabetA, outputAlphabetA, transitionA);
         // TDFT B = new TDFT(initialStateB, statesB, finalStatesB, inputAlphabetB, outputAlphabetB, transitionB);
         
+        //construct the final 2DFT T = B ∘ A
+        // state  Q x (P U {unkown})
+        // Integer[] initialStateT = new Integer[]{statesB.get(initialStateB), statesA.get(initialStateA)};
+        // Integer[] finalStateT = new Integer[]{statesB.get(finalStateB), statesA.get(finalStateA)};
+        // HashMap<Integer[], Integer> statesT = new HashMap<Integer[], Integer>();
+        // int stateCount = 0;
+        // for (String stateB : statesB.keySet()) {
+        //     int stateBNum = statesB.get(stateB);
+        //     for (String stateA : statesA.keySet()) {
+        //         int stateANum = statesA.get(stateA);
+        //         statesT.put(new Integer[]{stateBNum, stateANum}, stateCount);
+        //         stateCount++;
+        //     }
+        //     statesT.put(new Integer[]{stateBNum, statesA.size()}, stateCount);
+        //     stateCount++;
+        // }
+        // HashMap<String, Integer> inputAlphabetT = inputAlphabet;
+        // inputAlphabetT.put("^", inAlpha.length);
+        // inputAlphabetT.put("$", inAlpha.length+1);
+        // HashSet<String> outputAlphabetT = outputAlphabet;
+        
+        // Object[][][] transitionT = new Object[statesT.size()][inputAlphabetT.size()][3];
+
+        // for (String stateB : statesB.keySet()) {
+        //     int stateBNum = statesB.get(stateB);
+        //     for (String stateA : statesA.keySet()) {
+        //         int stateANum = statesA.get(stateA);
+        //         for (int i = 0; i < inputAlphabetT.size(); i++) {
+        //             Object[] singleTransitionA = transitionA[stateANum][i];
+        //             if (singleTransitionA[2] != null){
+        //                 int outputNum = inputAlphabetB.get((String)singleTransitionA[0]);
+        //                 Object[] singleTransitionB = transitionB[stateBNum][outputNum];
+        //                 if (singleTransitionB[2] != null) {
+        //                     if ((Integer)singleTransitionB[2] == 1) {
+        //                         Integer[] newState = new Integer[]{statesB.get((String)singleTransitionB[1]),statesA.get((String)singleTransitionA[1])};
+        //                         transitionT[statesT.get(new Integer[]{stateBNum,stateANum})][i] = new Object[]{(String)singleTransitionB[0],newState,1};
+        //                     } else if ((Integer)singleTransitionB[2] == -1) {
+                                
+        //                     }
+        //                 }
+        //             }
+
+        //         } 
+
+        //     }
+        // }
 
         //construct 2DFT encoding for A
         //initialise
