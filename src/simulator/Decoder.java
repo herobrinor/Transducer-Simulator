@@ -1560,12 +1560,74 @@ public class Decoder {
         // TDFT A = new TDFT(initialStateA, statesA, finalStatesA, inputAlphabetA, outputAlphabetA, transitionA);
         // TDFT B = new TDFT(initialStateB, statesB, finalStatesB, inputAlphabetB, outputAlphabetB, transitionB);
         
-        //construct the final 2DFT T = B ∘ A
-        // state  Q x (P U {unkown})
-        // Integer[] initialStateT = new Integer[]{statesB.get(initialStateB), statesA.get(initialStateA)};
-        // Integer[] finalStateT = new Integer[]{statesB.get(finalStateB), statesA.get(finalStateA)};
-        // HashMap<Integer[], Integer> statesT = new HashMap<Integer[], Integer>();
-        // int stateCount = 0;
+        //construct the final 2DFT T = A ∘ B
+        // state of T is a function f of Q (set of state of A) x a control state C (forwarding or searching or returning) x state of A x state of B 
+        Integer[] initialStateT = new Integer[statesA.size()+3];
+        initialStateT[statesA.size()] = 0;
+        initialStateT[statesA.size()+1] = statesA.get(initialStateA);
+        initialStateT[statesA.size()+2] = statesB.get(initialStateB);
+        Integer[] finalStateT = new Integer[statesA.size()+3];
+        finalStateT[statesA.size()] = 0;
+        finalStateT[statesA.size()+1] = statesA.get(finalStateA);
+        finalStateT[statesA.size()+2] = statesB.get(finalStateB);
+        HashMap<Integer[], Integer> statesT = new HashMap<Integer[], Integer>();
+        statesT.put(initialStateT, 0);
+        statesT.put(finalStateT, 1);
+        int stateCount = 2;
+        HashMap<String, Integer> inputAlphabetT = inputAlphabet;
+        inputAlphabetT.put("^", inAlpha.length);
+        inputAlphabetT.put("$", inAlpha.length+1);
+        HashSet<String> outputAlphabetT = outputAlphabet;
+        HashMap<Integer[], Object[][]> transitionMap = new HashMap<Integer[], Object[][]>();
+
+        // for every state A and B pair
+        for (String stateB : statesB.keySet()) {
+            for (String stateA : statesA.keySet()) {
+                int stateANum = statesA.get(stateA);
+                int stateBNum = statesB.get(stateB);
+                // create current state 
+                Integer[] currState = new Integer[statesA.size()+3];
+                currState[statesA.size()] = 0;
+                currState[statesA.size()+1] = stateANum;
+                currState[statesA.size()+2] = stateBNum;
+                int currStateNum = 0;
+                if (statesT.get(currState) != null) {
+                    currStateNum = statesT.get(currState);
+                } else {
+                    currStateNum = stateCount;
+                    stateCount++;
+                }
+                // create new transition function
+                Object[][] trans = new Object[inputAlphabetT.size()][3];
+                // for every input symbol
+                for (int k = 0; k < inputAlphabetT.size(); k++) {
+                    // simulate A on this symbol
+                    if (transitionA[stateANum][k][0] != null) {
+                        // if moving right
+                        if (transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][2] != null && (int)transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][2] == 1) {
+                            // create next state
+                            Integer[] nextState = new Integer[statesA.size()+3];
+                            nextState[statesA.size()] = 0;
+                            nextState[statesA.size()+1] = statesA.get((String)transitionA[stateANum][k][1]);
+                            nextState[statesA.size()+2] = statesB.get((String)transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][1]);
+                            // if not exist add to state
+                            if (statesT.get(nextState) != null) {
+                                trans[k] = new Object[]{(String)transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][0],statesT.get(nextState),1};
+                            } else {
+                                trans[k] = new Object[]{(String)transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][0],stateCount,1};
+                                statesT.put(nextState, stateCount);
+                                stateCount++;
+                            }
+                        } else if (transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][2] != null && (int)transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][2] == -1) {
+                            // if moving left
+                            
+                        }
+                    }
+                    
+                }
+            }
+        }
+        
         // for (String stateB : statesB.keySet()) {
         //     int stateBNum = statesB.get(stateB);
         //     for (String stateA : statesA.keySet()) {
@@ -1576,10 +1638,7 @@ public class Decoder {
         //     statesT.put(new Integer[]{stateBNum, statesA.size()}, stateCount);
         //     stateCount++;
         // }
-        // HashMap<String, Integer> inputAlphabetT = inputAlphabet;
-        // inputAlphabetT.put("^", inAlpha.length);
-        // inputAlphabetT.put("$", inAlpha.length+1);
-        // HashSet<String> outputAlphabetT = outputAlphabet;
+
         
         // Object[][][] transitionT = new Object[statesT.size()][inputAlphabetT.size()][3];
 
