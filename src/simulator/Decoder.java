@@ -1620,7 +1620,80 @@ public class Decoder {
                             }
                         } else if (transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][2] != null && (int)transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][2] == -1) {
                             // if moving left
-                            
+                            // create next state
+                            Integer[] nextState = new Integer[statesA.size()+3];
+                            nextState[statesA.size()] = 1;
+                            nextState[statesA.size()+1] = stateANum;
+                            nextState[statesA.size()+2] = stateBNum;
+                            // if not exist add to state
+                            if (statesT.get(nextState) != null) {
+                                trans[k] = new Object[]{(String)transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][0],statesT.get(nextState),-1};
+                            } else {
+                                trans[k] = new Object[]{(String)transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][0],stateCount,-1};
+                                statesT.put(nextState, stateCount);
+                                stateCount++;
+                            }
+                            // add next searching state to a queue
+                            Queue<Integer[]> searchingQueue =  new LinkedList<Integer[]>();
+                            searchingQueue.add(nextState);
+                            // add group maping queue
+                            Queue<Integer[]> groupMapingQueue =  new LinkedList<Integer[]>();
+                            Integer[] initialGroup = new Integer[statesA.size()];
+                            initialGroup[stateANum] = 0;
+                            groupMapingQueue.add(initialGroup);
+                            // add group maping queue
+                            Queue<HashSet<Integer>> groupQueue =  new LinkedList<HashSet<Integer>>();
+                            HashSet<Integer> statesInGroup = new HashSet<Integer>();
+                            statesInGroup.add(stateANum);
+                            groupQueue.add(statesInGroup);
+                            // loop to search all possible previous state of A
+                            while (!searchingQueue.isEmpty()) {
+                                Integer[] searchingState = searchingQueue.poll();
+                                Integer[] searchingGroup = groupMapingQueue.poll();
+                                Integer[] nextGroup = new Integer[statesA.size()];
+                                HashSet<Integer> group = groupQueue.poll();
+                                HashSet<Integer> nextStatesInGroup = new HashSet<Integer>();
+                                // for all possible previous input symbol except $ (the right endmarker)
+                                for (int i = 0; i < inputAlphabetT.size()-1; i++) {
+                                    Integer[] possibleState = new Integer[statesA.size()+3];
+                                    possibleState[statesA.size()] = 1;
+                                    possibleState[statesA.size()+1] = stateANum;
+                                    possibleState[statesA.size()+2] = stateBNum;
+                                    int possibleStateCount = 0;
+                                    int groupNum = 1;
+                                    for (int j = 0; j < statesA.size(); j++) {
+                                        if (searchingGroup[searchingState[statesA.size()+1]] != null && searchingGroup[searchingState[statesA.size()+1]] == 0) {
+                                            // find possible previous states
+                                            if ((String)transitionA[j][i][1] != null && group.contains(statesA.get((String)transitionA[j][i][1]))) {
+                                                possibleState[j] = searchingState[statesA.size()+1];
+                                                possibleStateCount++;
+                                                // map to different groups at the first time
+                                                nextGroup[j] = groupNum;
+                                                groupNum++;
+                                                nextStatesInGroup.add(j);
+                                            }
+                                        } else {
+                                            // find possible previous states
+                                            if ((String)transitionA[j][i][1] != null && group.contains(statesA.get((String)transitionA[j][i][1]))) {
+                                                possibleState[j] = searchingState[statesA.size()+1];
+                                                possibleStateCount++;
+                                                // map to relevant groups
+                                                nextGroup[j] = searchingGroup[statesA.get((String)transitionA[j][i][1])];
+                                                nextStatesInGroup.add(j);
+                                            }
+                                        }
+                                    }
+                                    if (possibleStateCount == 0) {//map to qerr
+
+                                    } else if (possibleStateCount == 1) {//found and return
+
+                                    } else if (possibleStateCount == statesA.size()) {//find special cases
+
+                                    } else {// continue searching process
+
+                                    }
+                                }
+                            }
                         }
                     }
                     
