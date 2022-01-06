@@ -1625,13 +1625,13 @@ public class Decoder {
                         } else if (transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][2] != null && (int)transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][2] == -1) {
                             // if moving left
                             // create next state
+                            String nextOutput = (String)transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][0];
+                            int nextStateBNum = statesB.get((String)transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][1]);
                             Integer[] nextState = new Integer[statesA.size()+3];
                             nextState[stateANum] = 0;
                             nextState[statesA.size()] = 1;
                             nextState[statesA.size()+1] = stateANum;
-                            nextState[statesA.size()+2] = stateBNum;
-                            String nextOutput = (String)transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][0];
-                            int nextStateBNum = statesB.get((String)transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][1]);
+                            nextState[statesA.size()+2] = nextStateBNum;
                             // if not exist add to state
                             if (statesT.get(nextState) != null) {
                                 trans[k] = new Object[]{nextOutput,statesT.get(nextState),-1};
@@ -1663,7 +1663,7 @@ public class Decoder {
                                     Integer[] possibleState = new Integer[statesA.size()+3];
                                     possibleState[statesA.size()] = 1;
                                     possibleState[statesA.size()+1] = stateANum;
-                                    possibleState[statesA.size()+2] = stateBNum;
+                                    possibleState[statesA.size()+2] = nextStateBNum;
                                     int possibleStateCount = 0;
                                     HashSet<Integer> possibleGroupCount = new HashSet<Integer>();
                                     int groupNum = 1;
@@ -1701,10 +1701,9 @@ public class Decoder {
                                         if (searchingState[stateANum] != null && searchingState[stateANum] == 0) {
                                             // if found in one step
                                             Integer[] foundState = new Integer[statesA.size()+3];
-                                            foundState[foundInitial] = 0;
-                                            foundState[statesA.size()] = 2;
-                                            foundState[statesA.size()+1] = stateANum;
-                                            foundState[statesA.size()+2] = stateBNum;
+                                            foundState[statesA.size()] = 3;
+                                            foundState[statesA.size()+1] = foundInitial;
+                                            foundState[statesA.size()+2] = nextStateBNum;
                                             nextStatesInGroup = new HashSet<Integer>();
                                             nextStatesInGroup.add(foundInitial);
                                             // if not exist add to state and returning queue
@@ -1728,7 +1727,7 @@ public class Decoder {
                                             foundState[backState] = 0;
                                             foundState[statesA.size()] = 2;
                                             foundState[statesA.size()+1] = stateANum;
-                                            foundState[statesA.size()+2] = stateBNum;
+                                            foundState[statesA.size()+2] = nextStateBNum;
                                             nextStatesInGroup = new HashSet<Integer>();
                                             nextStatesInGroup.add(backState);
                                             // find state in another group
@@ -1763,7 +1762,7 @@ public class Decoder {
                                             foundState[backState] = 0;
                                             foundState[statesA.size()] = 2;
                                             foundState[statesA.size()+1] = stateANum;
-                                            foundState[statesA.size()+2] = stateBNum;
+                                            foundState[statesA.size()+2] = nextStateBNum;
                                             nextStatesInGroup = new HashSet<Integer>();
                                             nextStatesInGroup.add(backState);
                                             // find state in another group
@@ -1809,24 +1808,93 @@ public class Decoder {
                                 transitionMap.put(searchingState, searchingTrans);
                             }
 
+                            // loop to find all returning states
                             while (!returningQueue.isEmpty()) {
                                 Integer[] returningState = returningQueue.poll();
                                 HashSet<Integer> group = returningGroupQueue.poll();
-                                if (returningState[statesA.size()] == 1) { 
-                                    //check merging
+                                // create new transition function
+                                Object[][] returningTrans = new Object[inputAlphabetT.size()][3];
+                                if (returningState[statesA.size()] == 2) {
+                                    // for all possible input symbol
+                                    for (int i = 0; i < inputAlphabetT.size(); i++) {
+                                        if (i == inputAlphabetT.size()-2) {// expect left end marker ^
+                                            continue;
+                                        }
+                                        // create next possible state
+                                        HashSet<Integer> nextStatesInGroup = new HashSet<Integer>();
+                                        Integer[] possibleState = new Integer[statesA.size()+3];
+                                        possibleState[statesA.size()] = 3;
+                                        possibleState[statesA.size()+1] = stateANum;
+                                        possibleState[statesA.size()+2] = nextStateBNum;
+                                        //check merging
+                                        Integer leftState = null;
+                                        for (Integer checkState : group) {
+                                            if (transitionA[checkState][i][2] == null) {
+                                                //map to error state
+                                                returningTrans[i] = new Object[]{null,2,1};
+                                            }
+                                            Integer rightState = statesA.get((String)transitionA[checkState][i][2]);
+                                            possibleState[rightState] = returningState[checkState];
+                                            if (returningState[checkState] == 0) {
+                                                leftState = checkState;
+                                            }
+                                            nextStatesInGroup.add(rightState);
+                                        }
 
-                                    // if merge, found left state back to forwarding mode
-
-                                    // if not, continue to find back position
-                                    
-                                } else if (returningState[statesA.size()] == 2) {
-                                    if (group.size() == 1) {
-                                        // found left state back to forwarding mode
-
-                                    } else if (group.size() == 2) {
-                                        // switch to returning mode and continue to find back position
+                                        if (nextStatesInGroup.size() == 1) {
+                                            // if merge, found left state back to found mode
+                                            Integer[] foundState = new Integer[statesA.size()+3];
+                                            foundState[statesA.size()] = 3;
+                                            foundState[statesA.size()+1] = leftState;
+                                            foundState[statesA.size()+2] = nextStateBNum;
+                                            // if not exist add to state
+                                            if (statesT.get(foundState) != null) {
+                                                returningTrans[i] = new Object[]{nextOutput,statesT.get(foundState),1};
+                                                if (transitionMap.get(possibleState) == null) {
+                                                    returningQueue.add(possibleState);
+                                                    returningGroupQueue.add(nextStatesInGroup);
+                                                }
+                                            } else {
+                                                returningTrans[i] = new Object[]{nextOutput,stateCount,1};
+                                                statesT.put(foundState, stateCount);
+                                                stateCount++;
+                                                returningQueue.add(possibleState);
+                                                returningGroupQueue.add(nextStatesInGroup);
+                                            }
+                                        } else {
+                                            // if not, continue to find back position
+                                            if (statesT.get(possibleState) != null) {
+                                                returningTrans[i] = new Object[]{null,statesT.get(possibleState),1};
+                                                if (transitionMap.get(possibleState) == null) {
+                                                    returningQueue.add(possibleState);
+                                                    returningGroupQueue.add(nextStatesInGroup);
+                                                }
+                                            } else {
+                                                returningTrans[i] = new Object[]{null,stateCount,1};
+                                                statesT.put(possibleState, stateCount);
+                                                stateCount++;
+                                                returningQueue.add(possibleState);
+                                                returningGroupQueue.add(nextStatesInGroup);
+                                            }
+                                        }
+                                    }
+                                } else if (returningState[statesA.size()] == 3) {
+                                    // switch to forwarding mode
+                                    Integer[] forwardingState = new Integer[statesA.size()+3];
+                                    forwardingState[statesA.size()] = 0;
+                                    forwardingState[statesA.size()+1] = returningState[statesA.size()+1];
+                                    forwardingState[statesA.size()+2] = nextStateBNum;
+                                    Integer stateNum = statesT.get(forwardingState);
+                                    if (stateNum == null) {
+                                        stateNum = stateCount;
+                                        statesT.put(forwardingState, stateCount);
+                                        stateCount++;
+                                    }
+                                    for (int i = 0; i < inputAlphabetT.size(); i++) {
+                                        returningTrans[i] = new Object[]{null,stateNum,-1};
                                     }
                                 }
+                                transitionMap.put(returningState, returningTrans);
                             }
                         }
                     }
