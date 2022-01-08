@@ -1388,6 +1388,7 @@ public class Decoder {
             }
         }
         Object[][][] transitionA = new Object[statesA.size()][inputAlphabetA.size()][3];
+        transitionA[statesA.get(initialStateA)][inAlpha.length] = new Object[]{"",initialStateA,1};
         for (int i = 0; i < stateTransition.length; i++) {
             for (int j = 0; j < stateTransition[i].length; j++) {
                 if (stateTransition[i][j] != null && !stateTransition[i][j].equals("")) {
@@ -1607,16 +1608,22 @@ public class Decoder {
                 // for every input symbol
                 for (int k = 0; k < inputAlphabetT.size(); k++) {
                     // simulate A on this symbol
-                    if (transitionA[stateANum][k][0] != null) {
+                    if (transitionA[stateANum][k][2] != null) {
                         // if moving right
-                        Integer direction = (Integer)transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][2];
+                        int inputSymbolNum = 0;
+                        if (inputAlphabetB.get((String)transitionA[stateANum][k][0]) == null) {
+                            inputSymbolNum = (inAlpha.length+1)*statesArray.length;
+                        } else {
+                            inputSymbolNum = inputAlphabetB.get((String)transitionA[stateANum][k][0]);
+                        }
+                        Integer direction = (Integer)transitionB[stateBNum][inputSymbolNum][2];
                         if (direction != null && direction == 1) {
                             // create next state
                             Integer[] nextState = new Integer[statesA.size()+3];
                             nextState[statesA.size()] = 0;
                             nextState[statesA.size()+1] = statesA.get((String)transitionA[stateANum][k][1]);
-                            nextState[statesA.size()+2] = statesB.get((String)transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][1]);
-                            String nextOutput = (String)transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][0];
+                            nextState[statesA.size()+2] = statesB.get((String)transitionB[stateBNum][inputSymbolNum][1]);
+                            String nextOutput = (String)transitionB[stateBNum][inputSymbolNum][0];
                             // if not exist add to state
                             if (statesT.get(Arrays.toString(nextState)) != null) {
                                 trans[k] = new Object[]{nextOutput,statesT.get(Arrays.toString(nextState)),1};
@@ -1628,8 +1635,8 @@ public class Decoder {
                         } else if (direction != null && direction == -1) {
                             // if moving left
                             // create next state
-                            String nextOutput = (String)transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][0];
-                            int nextStateBNum = statesB.get((String)transitionB[stateBNum][inputAlphabetB.get((String)transitionA[stateANum][k][0])][1]);
+                            String nextOutput = (String)transitionB[stateBNum][inputSymbolNum][0];
+                            int nextStateBNum = statesB.get((String)transitionB[stateBNum][inputSymbolNum][1]);
                             Integer[] nextState = new Integer[statesA.size()+3];
                             nextState[stateANum] = 0;
                             nextState[statesA.size()] = 1;
@@ -1695,121 +1702,121 @@ public class Decoder {
                                         }
                                     }
                                     // meet the left end-marker
-                                    if (i == inputAlphabetT.size()-2) {
-                                        if (searchingState[statesA.get(initialStateA)] == null) {
-                                            searchingTrans[i] = new Object[]{"",1,1};
-                                            continue;
+                                    // if (i == inputAlphabetT.size()-2) {
+                                    //     if (searchingState[statesA.get(initialStateA)] == null) {
+                                    //         searchingTrans[i] = new Object[]{"",1,1};
+                                    //         continue;
+                                    //     }
+                                    //     // found initial state
+                                    //     Integer[] foundState = new Integer[statesA.size()+3];
+                                    //     foundState[statesA.get(initialStateA)] = 0;
+                                    //     foundState[statesA.size()] = 2;
+                                    //     foundState[statesA.size()+1] = stateANum;
+                                    //     foundState[statesA.size()+2] = nextStateBNum;
+                                    //     nextStatesInGroup = new HashSet<Integer>();
+                                    //     nextStatesInGroup.add(statesA.get(initialStateA));
+                                    //     // find state in another group
+                                    //     for (int j = 0; j < searchingState.length-3; j++) {
+                                    //         if (searchingState[j] != null && searchingState[j] != searchingState[statesA.get(initialStateA)]) {
+                                    //             foundState[j] = 1;
+                                    //             nextStatesInGroup.add(j);
+                                    //             break;
+                                    //         }
+                                    //     }
+                                    //     // if not exist add to state and returning queue
+                                    //     if (statesT.get(Arrays.toString(foundState)) != null) {
+                                    //         searchingTrans[i] = new Object[]{"",statesT.get(Arrays.toString(foundState)),1};
+                                    //         if (!returningQueue.contains(foundState)) {
+                                    //             returningQueue.add(foundState);
+                                    //             returningGroupQueue.add(nextStatesInGroup);
+                                    //         }
+                                    //     } else {
+                                    //         searchingTrans[i] = new Object[]{"",stateCount,1};
+                                    //         statesT.put(Arrays.toString(foundState), stateCount);
+                                    //         stateCount++;
+                                    //         returningQueue.add(foundState);
+                                    //         returningGroupQueue.add(nextStatesInGroup);
+                                    //     }
+                                    // } else {
+                                    // }
+                                    if (possibleStateCount == 0 && possibleGroupCount.size() == 0) {//map to qerr
+                                        searchingTrans[i] = new Object[]{"",1,1};
+                                    } else if (possibleGroupCount.size() == 1) {//found and return
+                                        // find one source state
+                                        int foundInitial = 0;
+                                        for (Integer state : nextStatesInGroup) {
+                                            foundInitial = state;
+                                            break;
                                         }
-                                        // found initial state
-                                        Integer[] foundState = new Integer[statesA.size()+3];
-                                        foundState[statesA.get(initialStateA)] = 0;
-                                        foundState[statesA.size()] = 2;
-                                        foundState[statesA.size()+1] = stateANum;
-                                        foundState[statesA.size()+2] = nextStateBNum;
-                                        nextStatesInGroup = new HashSet<Integer>();
-                                        nextStatesInGroup.add(statesA.get(initialStateA));
-                                        // find state in another group
-                                        for (int j = 0; j < searchingState.length-3; j++) {
-                                            if (searchingState[j] != null && searchingState[j] != searchingState[statesA.get(initialStateA)]) {
-                                                foundState[j] = 1;
-                                                nextStatesInGroup.add(j);
-                                                break;
-                                            }
-                                        }
-                                        // if not exist add to state and returning queue
-                                        if (statesT.get(Arrays.toString(foundState)) != null) {
-                                            searchingTrans[i] = new Object[]{"",statesT.get(Arrays.toString(foundState)),1};
-                                            if (!returningQueue.contains(foundState)) {
+                                        if (searchingState[stateANum] != null && searchingState[stateANum] == 0) {
+                                            // if found in one step
+                                            Integer[] foundState = new Integer[statesA.size()+3];
+                                            foundState[statesA.size()] = 3;
+                                            foundState[statesA.size()+1] = foundInitial;
+                                            foundState[statesA.size()+2] = nextStateBNum;
+                                            nextStatesInGroup = new HashSet<Integer>();
+                                            nextStatesInGroup.add(foundInitial);
+                                            // if not exist add to state and returning queue
+                                            if (statesT.get(Arrays.toString(foundState)) != null) {
+                                                searchingTrans[i] = new Object[]{"",statesT.get(Arrays.toString(foundState)),1};
+                                                if (!returningQueue.contains(foundState)) {
+                                                    returningQueue.add(foundState);
+                                                    returningGroupQueue.add(nextStatesInGroup);
+                                                }
+                                            } else {
+                                                searchingTrans[i] = new Object[]{"",stateCount,1};
+                                                statesT.put(Arrays.toString(foundState), stateCount);
+                                                stateCount++;
                                                 returningQueue.add(foundState);
                                                 returningGroupQueue.add(nextStatesInGroup);
                                             }
                                         } else {
-                                            searchingTrans[i] = new Object[]{"",stateCount,1};
-                                            statesT.put(Arrays.toString(foundState), stateCount);
-                                            stateCount++;
-                                            returningQueue.add(foundState);
-                                            returningGroupQueue.add(nextStatesInGroup);
+                                            // else (found in several steps)
+                                            Integer[] foundState = new Integer[statesA.size()+3];
+                                            int backState = statesA.get((String)transitionA[foundInitial][i][1]);
+                                            foundState[backState] = 0;
+                                            foundState[statesA.size()] = 2;
+                                            foundState[statesA.size()+1] = stateANum;
+                                            foundState[statesA.size()+2] = nextStateBNum;
+                                            nextStatesInGroup = new HashSet<Integer>();
+                                            nextStatesInGroup.add(backState);
+                                            // find state in another group
+                                            for (int j = 0; j < searchingState.length-3; j++) {
+                                                if (searchingState[j] != null && searchingState[j] != searchingState[backState]) {
+                                                    foundState[j] = 1;
+                                                    nextStatesInGroup.add(j);
+                                                    break;
+                                                }
+                                            }
+                                            // if not exist add to state and returning queue
+                                            if (statesT.get(Arrays.toString(foundState)) != null) {
+                                                searchingTrans[i] = new Object[]{"",statesT.get(Arrays.toString(foundState)),1};
+                                                if (!returningQueue.contains(foundState)) {
+                                                    returningQueue.add(foundState);
+                                                    returningGroupQueue.add(nextStatesInGroup);
+                                                }
+                                            } else {
+                                                searchingTrans[i] = new Object[]{"",stateCount,1};
+                                                statesT.put(Arrays.toString(foundState), stateCount);
+                                                stateCount++;
+                                                returningQueue.add(foundState);
+                                                returningGroupQueue.add(nextStatesInGroup);
+                                            }
                                         }
                                     } else {
-                                        if (possibleStateCount == 0 && possibleGroupCount.size() == 0) {//map to qerr
-                                            searchingTrans[i] = new Object[]{"",1,1};
-                                        } else if (possibleGroupCount.size() == 1) {//found and return
-                                            // find one source state
-                                            int foundInitial = 0;
-                                            for (Integer state : nextStatesInGroup) {
-                                                foundInitial = state;
-                                                break;
-                                            }
-                                            if (searchingState[stateANum] != null && searchingState[stateANum] == 0) {
-                                                // if found in one step
-                                                Integer[] foundState = new Integer[statesA.size()+3];
-                                                foundState[statesA.size()] = 3;
-                                                foundState[statesA.size()+1] = foundInitial;
-                                                foundState[statesA.size()+2] = nextStateBNum;
-                                                nextStatesInGroup = new HashSet<Integer>();
-                                                nextStatesInGroup.add(foundInitial);
-                                                // if not exist add to state and returning queue
-                                                if (statesT.get(Arrays.toString(foundState)) != null) {
-                                                    searchingTrans[i] = new Object[]{"",statesT.get(Arrays.toString(foundState)),1};
-                                                    if (!returningQueue.contains(foundState)) {
-                                                        returningQueue.add(foundState);
-                                                        returningGroupQueue.add(nextStatesInGroup);
-                                                    }
-                                                } else {
-                                                    searchingTrans[i] = new Object[]{"",stateCount,1};
-                                                    statesT.put(Arrays.toString(foundState), stateCount);
-                                                    stateCount++;
-                                                    returningQueue.add(foundState);
-                                                    returningGroupQueue.add(nextStatesInGroup);
-                                                }
-                                            } else {
-                                                // else (found in several steps)
-                                                Integer[] foundState = new Integer[statesA.size()+3];
-                                                int backState = statesA.get((String)transitionA[foundInitial][i][1]);
-                                                foundState[backState] = 0;
-                                                foundState[statesA.size()] = 2;
-                                                foundState[statesA.size()+1] = stateANum;
-                                                foundState[statesA.size()+2] = nextStateBNum;
-                                                nextStatesInGroup = new HashSet<Integer>();
-                                                nextStatesInGroup.add(backState);
-                                                // find state in another group
-                                                for (int j = 0; j < searchingState.length-3; j++) {
-                                                    if (searchingState[j] != null && searchingState[j] != searchingState[backState]) {
-                                                        foundState[j] = 1;
-                                                        nextStatesInGroup.add(j);
-                                                        break;
-                                                    }
-                                                }
-                                                // if not exist add to state and returning queue
-                                                if (statesT.get(Arrays.toString(foundState)) != null) {
-                                                    searchingTrans[i] = new Object[]{"",statesT.get(Arrays.toString(foundState)),1};
-                                                    if (!returningQueue.contains(foundState)) {
-                                                        returningQueue.add(foundState);
-                                                        returningGroupQueue.add(nextStatesInGroup);
-                                                    }
-                                                } else {
-                                                    searchingTrans[i] = new Object[]{"",stateCount,1};
-                                                    statesT.put(Arrays.toString(foundState), stateCount);
-                                                    stateCount++;
-                                                    returningQueue.add(foundState);
-                                                    returningGroupQueue.add(nextStatesInGroup);
-                                                }
-                                            }
-                                        } else {
-                                            // continue searching process
-                                            if (statesT.get(Arrays.toString(possibleState)) != null) {
-                                                searchingTrans[i] = new Object[]{"",statesT.get(Arrays.toString(possibleState)),-1};
-                                                if (!searchingQueue.contains(possibleState)) {
-                                                    searchingQueue.add(possibleState);
-                                                    groupQueue.add(nextStatesInGroup);
-                                                }
-                                            } else {
-                                                searchingTrans[i] = new Object[]{"",stateCount,-1};
-                                                statesT.put(Arrays.toString(possibleState), stateCount);
-                                                stateCount++;
+                                        // continue searching process
+                                        if (statesT.get(Arrays.toString(possibleState)) != null) {
+                                            searchingTrans[i] = new Object[]{"",statesT.get(Arrays.toString(possibleState)),-1};
+                                            if (!searchingQueue.contains(possibleState)) {
                                                 searchingQueue.add(possibleState);
                                                 groupQueue.add(nextStatesInGroup);
                                             }
+                                        } else {
+                                            searchingTrans[i] = new Object[]{"",stateCount,-1};
+                                            statesT.put(Arrays.toString(possibleState), stateCount);
+                                            stateCount++;
+                                            searchingQueue.add(possibleState);
+                                            groupQueue.add(nextStatesInGroup);
                                         }
                                     }
                                 }
@@ -1858,22 +1865,22 @@ public class Decoder {
                                             // if not exist add to state
                                             if (statesT.get(Arrays.toString(foundState)) != null) {
                                                 returningTrans[i] = new Object[]{nextOutput,statesT.get(Arrays.toString(foundState)),1};
-                                                if (transitionMap.get(Arrays.toString(possibleState)) == null) {
-                                                    returningQueue.add(possibleState);
+                                                if (transitionMap.get(Arrays.toString(foundState)) == null && !returningQueue.contains(foundState)) {
+                                                    returningQueue.add(foundState);
                                                     returningGroupQueue.add(nextStatesInGroup);
                                                 }
                                             } else {
                                                 returningTrans[i] = new Object[]{nextOutput,stateCount,1};
                                                 statesT.put(Arrays.toString(foundState), stateCount);
                                                 stateCount++;
-                                                returningQueue.add(possibleState);
+                                                returningQueue.add(foundState);
                                                 returningGroupQueue.add(nextStatesInGroup);
                                             }
                                         } else {
                                             // if not, continue to find back position
                                             if (statesT.get(Arrays.toString(possibleState)) != null) {
                                                 returningTrans[i] = new Object[]{"",statesT.get(Arrays.toString(possibleState)),1};
-                                                if (transitionMap.get(Arrays.toString(possibleState)) == null) {
+                                                if (transitionMap.get(Arrays.toString(possibleState)) == null && !returningQueue.contains(possibleState)) {
                                                     returningQueue.add(possibleState);
                                                     returningGroupQueue.add(nextStatesInGroup);
                                                 }
