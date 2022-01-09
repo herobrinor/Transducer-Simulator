@@ -243,7 +243,7 @@ public class Simulator {
                         }
                         String TDFTDesc = "";
                         try {
-                            TDFTDesc = decoder.seprateMachine(modelDesc);
+                            TDFTDesc = decoder.fromSSTtoTDFT(modelDesc);
                         } catch (Exception e) {
                             e.printStackTrace();
                             System.err.println(e.getMessage());
@@ -252,6 +252,15 @@ public class Simulator {
                         }
                         System.out.println("Encoding of 2DFT:");
                         System.out.println(TDFTDesc);
+
+                        try {
+                            decoder.generateTDFTGraphPDF(TDFTDesc);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            System.err.println(e.getMessage());
+                            System.err.println("Construction Error. Please check encoding of 2DFT.");
+                            break;
+                        }
                         break;
                     default:
                         break;

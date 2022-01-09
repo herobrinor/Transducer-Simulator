@@ -6,3 +6,8 @@ graph/SSTGraph.log
 graph/SSTGraph.aux
 graph/SSTGraph.fls
 graph/SSTGraph.fdb_latexmk
+graph/TDFTGraph.tex
+graph/TDFTGraph.aux
+graph/TDFTGraph.log
+graph/TDFTGraph.pdf
+graph/TDFTGraph.synctex.gz
