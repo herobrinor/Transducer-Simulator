@@ -1428,7 +1428,10 @@ public class Decoder {
         // If p = p0 and a = $, then if F(q) starts by uX with u in B* and X in χ ,
         // then δ(p, t) = (u, Xi, -1).
         for (int j = 0; j < statesArray.length; j++) {
-            char[] pOut = partialOutput[j].toCharArray();
+            char[] pOut = new char[0];
+            if (partialOutput[j] != null && !partialOutput[j].equals("")) {
+                pOut = partialOutput[j].toCharArray();
+            }
             String outString = "";
             String var = "";
             for (int index = 0; index < pOut.length; index++) {
@@ -1525,6 +1528,9 @@ public class Decoder {
         // - or F(q) is of the form (B U χ)*XuX'(B U χ)* and we set B(p; t) = (u, X'i, -1).
         for (int index = 0; index < varArray.length; index++) {
             for (int j = 0; j < statesArray.length; j++) {
+                if (partialOutput[j] == null) {
+                    continue;
+                }
                 int position = partialOutput[j].indexOf(varArray[index]);
                 if (position != -1) {
                     char[] pOut = new char[0];
@@ -1547,7 +1553,7 @@ public class Decoder {
                     } else {
                         transitionB[2*index+1][(inAlpha.length*statesArray.length)+j] = new Object[]{outString,var+"i",-1};
                     }
-                    break;
+                    continue;
                 }
             }
         }
@@ -1669,8 +1675,8 @@ public class Decoder {
                                     HashSet<Integer> nextStatesInGroup = new HashSet<Integer>();
                                     Integer[] possibleState = new Integer[statesA.size()+3];
                                     possibleState[statesA.size()] = 1;
-                                    possibleState[statesA.size()+1] = stateANum;
-                                    possibleState[statesA.size()+2] = nextStateBNum;
+                                    possibleState[statesA.size()+1] = searchingState[statesA.size()+1];
+                                    possibleState[statesA.size()+2] = searchingState[statesA.size()+2];
                                     int possibleStateCount = 0;
                                     HashSet<Integer> possibleGroupCount = new HashSet<Integer>();
                                     int groupNum = 1;
@@ -1711,7 +1717,7 @@ public class Decoder {
                                             Integer[] foundState = new Integer[statesA.size()+3];
                                             foundState[statesA.size()] = 3;
                                             foundState[statesA.size()+1] = foundInitial;
-                                            foundState[statesA.size()+2] = nextStateBNum;
+                                            foundState[statesA.size()+2] = searchingState[statesA.size()+2];
                                             nextStatesInGroup = new HashSet<Integer>();
                                             nextStatesInGroup.add(foundInitial);
                                             // if not exist add to state and returning queue
@@ -1734,8 +1740,8 @@ public class Decoder {
                                             int backState = statesA.get((String)transitionA[foundInitial][i][1]);
                                             foundState[backState] = 0;
                                             foundState[statesA.size()] = 2;
-                                            foundState[statesA.size()+1] = stateANum;
-                                            foundState[statesA.size()+2] = nextStateBNum;
+                                            foundState[statesA.size()+1] = searchingState[statesA.size()+1];
+                                            foundState[statesA.size()+2] = searchingState[statesA.size()+2];
                                             nextStatesInGroup = new HashSet<Integer>();
                                             nextStatesInGroup.add(backState);
                                             // find state in another group
@@ -1789,22 +1795,23 @@ public class Decoder {
                                 Object[][] returningTrans = new Object[inputAlphabetT.size()][3];
                                 if (returningState[statesA.size()] == 2) {
                                     // for all possible input symbol
-                                    for (int i = 0; i < inputAlphabetT.size(); i++) {
+                                    input:for (int i = 0; i < inputAlphabetT.size(); i++) {
                                         if (i == inputAlphabetT.size()-2) {// expect left end marker ^
                                             continue;
                                         }
                                         // create next possible state
                                         HashSet<Integer> nextStatesInGroup = new HashSet<Integer>();
                                         Integer[] possibleState = new Integer[statesA.size()+3];
-                                        possibleState[statesA.size()] = 3;
-                                        possibleState[statesA.size()+1] = stateANum;
-                                        possibleState[statesA.size()+2] = nextStateBNum;
+                                        possibleState[statesA.size()] = 2;
+                                        possibleState[statesA.size()+1] = returningState[statesA.size()+1];
+                                        possibleState[statesA.size()+2] = returningState[statesA.size()+2];
                                         //check merging
                                         Integer leftState = null;
                                         for (Integer checkState : group) {
                                             if (transitionA[checkState][i][2] == null) {
                                                 //map to error state
                                                 returningTrans[i] = new Object[]{"",1,1};
+                                                continue input;
                                             }
                                             Integer rightState = statesA.get((String)transitionA[checkState][i][1]);
                                             possibleState[rightState] = returningState[checkState];
@@ -1819,7 +1826,7 @@ public class Decoder {
                                             Integer[] foundState = new Integer[statesA.size()+3];
                                             foundState[statesA.size()] = 3;
                                             foundState[statesA.size()+1] = leftState;
-                                            foundState[statesA.size()+2] = nextStateBNum;
+                                            foundState[statesA.size()+2] = returningState[statesA.size()+2];
                                             // if not exist add to state
                                             if (statesT.get(Arrays.toString(foundState)) != null) {
                                                 returningTrans[i] = new Object[]{nextOutput,statesT.get(Arrays.toString(foundState)),1};
@@ -1856,7 +1863,7 @@ public class Decoder {
                                     Integer[] forwardingState = new Integer[statesA.size()+3];
                                     forwardingState[statesA.size()] = 0;
                                     forwardingState[statesA.size()+1] = returningState[statesA.size()+1];
-                                    forwardingState[statesA.size()+2] = nextStateBNum;
+                                    forwardingState[statesA.size()+2] = returningState[statesA.size()+2];
                                     Integer stateNum = statesT.get(Arrays.toString(forwardingState));
                                     if (stateNum == null) {
                                         stateNum = stateCount;
@@ -1957,152 +1964,153 @@ public class Decoder {
         }
         Tencoding += "})";
 
-        // //construct 2DFT encoding for A
-        // //initialise
-        // String Aencoding = "(";
-        // //add states set
-        // Aencoding += "{";
-        // isFirst = true;
-        // for (String state : statesA.keySet()) {
-        //     if (isFirst) {
-        //         Aencoding += state;
-        //         isFirst = false;
-        //     } else {
-        //         Aencoding +=  "," + state;
-        //     }
-        // }
-        // Aencoding += "},{";
-        // //add input and output alphbet
-        // isFirst = true;
-        // for (String symbol : inputAlphabetA.keySet()) {
-        //     if (symbol != "^" && symbol != "$") {
-        //         if (isFirst) {
-        //             Aencoding += symbol;
-        //             isFirst = false;
-        //         } else {
-        //             Aencoding +=  "," + symbol;
-        //         }
-        //     }
-        // }
-        // Aencoding += "},{";
-        // isFirst = true;
-        // for (String symbol : outputAlphabetA) {
-        //     if (isFirst) {
-        //         Aencoding += symbol;
-        //         isFirst = false;
-        //     } else {
-        //         Aencoding +=  "," + symbol;
-        //     }
-        // }
-        // Aencoding += "},{";
+        //construct 2DFT encoding for A
+        //initialise
+        String Aencoding = "(";
+        //add states set
+        Aencoding += "{";
+        isFirst = true;
+        for (String state : statesA.keySet()) {
+            if (isFirst) {
+                Aencoding += state;
+                isFirst = false;
+            } else {
+                Aencoding +=  "," + state;
+            }
+        }
+        Aencoding += "},{";
+        //add input and output alphbet
+        isFirst = true;
+        for (String symbol : inputAlphabetA.keySet()) {
+            if (symbol != "^" && symbol != "$") {
+                if (isFirst) {
+                    Aencoding += symbol;
+                    isFirst = false;
+                } else {
+                    Aencoding +=  "," + symbol;
+                }
+            }
+        }
+        Aencoding += "},{";
+        isFirst = true;
+        for (String symbol : outputAlphabetA) {
+            if (isFirst) {
+                Aencoding += symbol;
+                isFirst = false;
+            } else {
+                Aencoding +=  "," + symbol;
+            }
+        }
+        Aencoding += "},{";
 
-        // //add variable sets
-        // isFirst = true;
-        // for (String state : statesA.keySet()) {
-        //     for (String symbol : inputAlphabetA.keySet()) {
-        //         int stateNum = statesA.get(state);
-        //         int symbolNum = inputAlphabetA.get(symbol);
-        //         Object[] singleTransition = transitionA[stateNum][symbolNum];
-        //         if (singleTransition[2] != null) {
-        //             if (isFirst) {
-        //                 Aencoding += "(" + state + "," + symbol + "," + (String)singleTransition[0] + "," + (String)singleTransition[1] + "," + String.valueOf((Integer)singleTransition[2]) + ")";
-        //                 isFirst = false;
-        //             } else {
-        //                 Aencoding += ",(" + state + "," + symbol + "," + (String)singleTransition[0] + "," + (String)singleTransition[1] + "," + String.valueOf((Integer)singleTransition[2]) + ")";
-        //             }
-        //         }
-        //     }
-        // }
+        //add variable sets
+        isFirst = true;
+        for (String state : statesA.keySet()) {
+            for (String symbol : inputAlphabetA.keySet()) {
+                int stateNum = statesA.get(state);
+                int symbolNum = inputAlphabetA.get(symbol);
+                Object[] singleTransition = transitionA[stateNum][symbolNum];
+                if (singleTransition[2] != null) {
+                    if (isFirst) {
+                        Aencoding += "(" + state + "," + symbol + "," + (String)singleTransition[0] + "," + (String)singleTransition[1] + "," + String.valueOf((Integer)singleTransition[2]) + ")";
+                        isFirst = false;
+                    } else {
+                        Aencoding += ",(" + state + "," + symbol + "," + (String)singleTransition[0] + "," + (String)singleTransition[1] + "," + String.valueOf((Integer)singleTransition[2]) + ")";
+                    }
+                }
+            }
+        }
 
-        // //add initial state
-        // Aencoding += "},{"+ initialStateA +"},{";
+        //add initial state
+        Aencoding += "},{"+ initialStateA +"},{";
 
-        // //add final state
-        // isFirst = true;
-        // for (String state : finalStatesA) {
-        //     if (isFirst) {
-        //         Aencoding += state;
-        //         isFirst = false;
-        //     } else {
-        //         Aencoding +=  "," + state;
-        //     }
-        // }
-        // Aencoding += "})";
+        //add final state
+        isFirst = true;
+        for (String state : finalStatesA) {
+            if (isFirst) {
+                Aencoding += state;
+                isFirst = false;
+            } else {
+                Aencoding +=  "," + state;
+            }
+        }
+        Aencoding += "})";
 
-        // //construct 2DFT encoding for B
-        // //initialise
-        // String Bencoding = "(";
-        // isFirst = true;// flag for first element in brackets
-        // //add states set
-        // Bencoding += "{";
-        // for (String state : statesB.keySet()) {
-        //     if (isFirst) {
-        //         Bencoding += state;
-        //         isFirst = false;
-        //     } else {
-        //         Bencoding +=  "," + state;
-        //     }
-        // }
-        // Bencoding += "},{";
-        // //add input and output alphbet
-        // isFirst = true;
-        // for (String symbol : inputAlphabetB.keySet()) {
-        //     if (symbol != "^" && symbol != "$") {
-        //         if (isFirst) {
-        //             Bencoding += symbol;
-        //             isFirst = false;
-        //         } else {
-        //             Bencoding +=  "," + symbol;
-        //         }
-        //     }
-        // }
-        // Bencoding += "},{";
-        // isFirst = true;
-        // for (String symbol : outputAlphabetB) {
-        //     if (isFirst) {
-        //         Bencoding += symbol;
-        //         isFirst = false;
-        //     } else {
-        //         Bencoding +=  "," + symbol;
-        //     }
-        // }
-        // Bencoding += "},{";
+        //construct 2DFT encoding for B
+        //initialise
+        String Bencoding = "(";
+        isFirst = true;// flag for first element in brackets
+        //add states set
+        Bencoding += "{";
+        for (String state : statesB.keySet()) {
+            if (isFirst) {
+                Bencoding += state;
+                isFirst = false;
+            } else {
+                Bencoding +=  "," + state;
+            }
+        }
+        Bencoding += "},{";
+        //add input and output alphbet
+        isFirst = true;
+        for (String symbol : inputAlphabetB.keySet()) {
+            if (symbol != "^" && symbol != "$") {
+                if (isFirst) {
+                    Bencoding += symbol;
+                    isFirst = false;
+                } else {
+                    Bencoding +=  "," + symbol;
+                }
+            }
+        }
+        Bencoding += "},{";
+        isFirst = true;
+        for (String symbol : outputAlphabetB) {
+            if (isFirst) {
+                Bencoding += symbol;
+                isFirst = false;
+            } else {
+                Bencoding +=  "," + symbol;
+            }
+        }
+        Bencoding += "},{";
 
-        // //add variable sets
-        // isFirst = true;
-        // for (String state : statesB.keySet()) {
-        //     for (String symbol : inputAlphabetB.keySet()) {
-        //         int stateNum = statesB.get(state);
-        //         int symbolNum = inputAlphabetB.get(symbol);
-        //         Object[] singleTransition = transitionB[stateNum][symbolNum];
-        //         if (singleTransition[2] != null) {
-        //             if (isFirst) {
-        //                 Bencoding += "(" + state + "," + symbol + "," + (String)singleTransition[0] + "," + (String)singleTransition[1] + "," + String.valueOf((Integer)singleTransition[2]) + ")";
-        //                 isFirst = false;
-        //             } else {
-        //                 Bencoding += ",(" + state + "," + symbol + "," + (String)singleTransition[0] + "," + (String)singleTransition[1] + "," + String.valueOf((Integer)singleTransition[2]) + ")";
-        //             }
-        //         }
-        //     }
-        // }
+        //add variable sets
+        isFirst = true;
+        for (String state : statesB.keySet()) {
+            for (String symbol : inputAlphabetB.keySet()) {
+                int stateNum = statesB.get(state);
+                int symbolNum = inputAlphabetB.get(symbol);
+                Object[] singleTransition = transitionB[stateNum][symbolNum];
+                if (singleTransition[2] != null) {
+                    if (isFirst) {
+                        Bencoding += "(" + state + "," + symbol + "," + (String)singleTransition[0] + "," + (String)singleTransition[1] + "," + String.valueOf((Integer)singleTransition[2]) + ")";
+                        isFirst = false;
+                    } else {
+                        Bencoding += ",(" + state + "," + symbol + "," + (String)singleTransition[0] + "," + (String)singleTransition[1] + "," + String.valueOf((Integer)singleTransition[2]) + ")";
+                    }
+                }
+            }
+        }
 
-        // //add initial state
-        // Bencoding += "},{"+ initialStateB +"},{";
+        //add initial state
+        Bencoding += "},{"+ initialStateB +"},{";
 
-        // //add final state
-        // isFirst = true;
-        // for (String state : finalStatesB) {
-        //     if (isFirst) {
-        //         Bencoding += state;
-        //         isFirst = false;
-        //     } else {
-        //         Bencoding +=  "," + state;
-        //     }
-        // }
-        // Bencoding += "})";
+        //add final state
+        isFirst = true;
+        for (String state : finalStatesB) {
+            if (isFirst) {
+                Bencoding += state;
+                isFirst = false;
+            } else {
+                Bencoding +=  "," + state;
+            }
+        }
+        Bencoding += "})";
 
-        // String output = Aencoding + "\n" + Bencoding + "\n" + Tencoding;
-        return Tencoding;
+        String output = Aencoding + "\n" + Bencoding + "\n" + Tencoding;
+        return output;
+        // return Tencoding;
     }
 
     public void generateSSTGraphPDF(String encoding) throws Exception {
