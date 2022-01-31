@@ -160,11 +160,11 @@ public class Simulator {
                         //ask user for model encoding
                         System.out.println("Please enter the encoding of SST:");
                         modelDesc = sc.nextLine();
-                        // while (!decoder.vaildSST(modelDesc) && !modelDesc.equals("q")) {
-                        //     System.err.println("Encoding invalid.");
-                        //     System.out.println("Please enter the encoding of transducer:");
-                        //     modelDesc = sc.nextLine();
-                        // }
+                        while (!decoder.vaildSST(modelDesc) && !modelDesc.equals("q")) {
+                            System.err.println("Encoding invalid.");
+                            System.out.println("Please enter the encoding of transducer:");
+                            modelDesc = sc.nextLine();
+                        }
                         if (modelDesc.equals("q")) {
                             break;
                         }

@@ -1,6 +1,7 @@
 package simulator.transducer;
 import simulator.util.Node;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -93,6 +94,12 @@ public class MSOT{
                 }
             }
         }
+
+        // loops to print outputEdgeSet (to debug)
+        // System.out.println("Output edge matrix:");
+        // for (int i = 0; i < outputEdgeSet.length; i++) {
+        //     System.out.println(Arrays.toString(outputEdgeSet[i]));
+        // }
 
         //find string representation in the new gragh
         String output = "";

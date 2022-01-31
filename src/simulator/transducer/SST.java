@@ -50,6 +50,8 @@ public class SST extends Transducer{
         char[] stringArray = inputString.toCharArray();
         // current state
         String currState = initialState;
+        System.out.println("Running chain of states:");
+        System.out.printf(currState);
         String output = "";
         int currStateNum;
         int currInputNum;
@@ -88,6 +90,7 @@ public class SST extends Transducer{
                 newVariableValue.put(variable, newValue);
             }
             variableValue = newVariableValue;
+            System.out.printf("->" + currState);
         }
 
         currStateNum = states.get(currState);
@@ -104,7 +107,7 @@ public class SST extends Transducer{
         } else {
             output = "";
         }
-
+        System.out.printf("\n");
         return output;
     }
 
