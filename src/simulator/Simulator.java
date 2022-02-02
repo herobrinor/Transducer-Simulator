@@ -83,7 +83,7 @@ public class Simulator {
                         //ask user for model encoding
                         System.out.println("Please enter the encoding of 2DFT:");
                         modelDesc = sc.nextLine();
-                        while (!decoder.vaildTDFT(modelDesc) && !modelDesc.equals("q")) {
+                        while (!decoder.vaildEncoding(modelDesc) && !modelDesc.equals("q")) {
                             System.err.println("Encoding invalid.");
                             System.out.println("Please enter the encoding of 2DFT:");
                             modelDesc = sc.nextLine();
@@ -96,7 +96,7 @@ public class Simulator {
                             // initialise a 2DFT instance
                             tdft = decoder.decodeTDFT(modelDesc);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.err.println(e.getMessage());
                             System.err.println("Construction Error. Please check encoding of 2DFT.");
                             break;
                         }
@@ -122,11 +122,11 @@ public class Simulator {
                         //ask user for model encoding
                         System.out.println("Please enter the encoding of MSOT:");
                         modelDesc = sc.nextLine();
-                        // while (!decoder.vaildMSOT(modelDesc) && !modelDesc.equals("q")) {
-                        //     System.err.println("Encoding invalid.");
-                        //     System.out.println("Please enter the encoding of MSOT:");
-                        //     modelDesc = sc.nextLine();
-                        // }
+                        while (!decoder.vaildEncoding(modelDesc) && !modelDesc.equals("q")) {
+                            System.err.println("Encoding invalid.");
+                            System.out.println("Please enter the encoding of MSOT:");
+                            modelDesc = sc.nextLine();
+                        }
                         if (modelDesc.equals("q")) {
                             break;
                         }
@@ -135,6 +135,7 @@ public class Simulator {
                             // initialise a MSOT instance
                             msot = decoder.decodeMSOT(modelDesc);
                         } catch (Exception e) {
+                            System.err.println(e.getMessage());
                             System.err.println("Construction Error. Please check encoding of MSOT.");
                             break;
                         }
@@ -160,7 +161,7 @@ public class Simulator {
                         //ask user for model encoding
                         System.out.println("Please enter the encoding of SST:");
                         modelDesc = sc.nextLine();
-                        while (!decoder.vaildSST(modelDesc) && !modelDesc.equals("q")) {
+                        while (!decoder.vaildEncoding(modelDesc) && !modelDesc.equals("q")) {
                             System.err.println("Encoding invalid.");
                             System.out.println("Please enter the encoding of transducer:");
                             modelDesc = sc.nextLine();
@@ -173,7 +174,6 @@ public class Simulator {
                             // initialise a SST instance
                             sst = decoder.decodeSST(modelDesc);
                         } catch (Exception e) {
-                            e.printStackTrace();
                             System.err.println(e.getMessage());
                             System.err.println("Construction Error. Please check encoding of SST.");
                             break;
@@ -223,9 +223,8 @@ public class Simulator {
                         try {
                             decoder.generateSSTGraphPDF(SSTDesc);
                         } catch (Exception e) {
-                            e.printStackTrace();
                             System.err.println(e.getMessage());
-                            System.err.println("Construction Error. Please check encoding of SST.");
+                            System.err.println("Construction graph representation Error. Please check encoding of SST.");
                             break;
                         }
                         break;
@@ -245,7 +244,6 @@ public class Simulator {
                         try {
                             TDFTDesc = decoder.fromSSTtoTDFT(modelDesc);
                         } catch (Exception e) {
-                            e.printStackTrace();
                             System.err.println(e.getMessage());
                             System.err.println("Construction Error. Please check encoding of SST.");
                             break;
@@ -256,9 +254,8 @@ public class Simulator {
                         try {
                             decoder.generateTDFTGraphPDF(TDFTDesc);
                         } catch (Exception e) {
-                            e.printStackTrace();
                             System.err.println(e.getMessage());
-                            System.err.println("Construction Error. Please check encoding of 2DFT.");
+                            System.err.println("Construction graph representation Error. Please check encoding of 2DFT.");
                             break;
                         }
                         break;

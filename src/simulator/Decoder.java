@@ -29,9 +29,12 @@ public class Decoder {
      * @param encoding Encoding of 2DFT
      * @return An instance of 2DFT
      */
-    public TDFT decodeTDFT(String encoding) {
+    public TDFT decodeTDFT(String encoding) throws Exception{
         //split the encoding string into different parts and storing in different arrays or hashmaps
         String[] sets = encoding.split("\\},\\{");
+        if (sets.length != 6) {
+            throw new Exception("Invalid 2DFT encoding structure.");
+        }
         String[] statesArray = sets[0].substring(2).split(",");
         String[] inAlpha = sets[1].split(",");
         String[] outAlpha = sets[2].split(",");
@@ -45,6 +48,9 @@ public class Decoder {
         for (int i = 0; i < statesArray.length; i++) {
             states.put(statesArray[i],i);
         }
+        if (states.get(initialState) == null) {
+            throw new Exception("Unknow initial state: " + initialState + ".");
+        }
         for (int i = 0; i < inAlpha.length; i++) {
             inputAlphabet.put(inAlpha[i],i);
         }
@@ -52,6 +58,9 @@ public class Decoder {
             outputAlphabet.add(outAlpha[i]);
         }
         for (int i = 0; i < finalStatesArray.length; i++) {
+            if (states.get(finalStatesArray[i]) == null) {
+                throw new Exception("Unknow final state: " + finalStatesArray[i] + ".");
+            }
             finalStates.add(finalStatesArray[i]);
         }
         inputAlphabet.put("^",inAlpha.length);
@@ -66,8 +75,14 @@ public class Decoder {
                 singleTrans = tranFunc[i].substring(0,tranFunc[i].length()-1).split(",");
             } else {
                 singleTrans = tranFunc[i].split(",");
-            }           
+            }
+            if (states.get(singleTrans[0]) == null) {
+                throw new Exception("Unknow state: " + singleTrans[0] + " in transition function.");
+            }
             int state = states.get(singleTrans[0]);
+            if (inputAlphabet.get(singleTrans[1]) == null) {
+                throw new Exception("Unknow input symbol: " + singleTrans[1] + " in transition function.");
+            }
             int symbol = inputAlphabet.get(singleTrans[1]);
             transition[state][symbol][0] = singleTrans[2];
             transition[state][symbol][1] = singleTrans[3];
@@ -96,9 +111,12 @@ public class Decoder {
      * @param encoding Encoding of MSOT
      * @return An instance of MSOT
      */
-    public MSOT decodeMSOT(String encoding) {
+    public MSOT decodeMSOT(String encoding) throws Exception {
         //split the encoding string into different parts and storing in different arrays or hashmaps
         String[] sets = encoding.split("\\},\\{");
+        if (sets.length != 5) {
+            throw new Exception("Invalid MSOT encoding structure.");
+        }
         String[] inAlpha = sets[0].substring(2).split(",");
         String[] outAlpha = sets[1].split(",");
         String[] copySetArray = sets[2].split(",");
@@ -120,7 +138,11 @@ public class Decoder {
         }
         for (int i = 0; i < nodeFormulaArray.length; i++) {
             String[] formula = nodeFormulaArray[i].split("=");
-            int copuSetNum = copySet.get(formula[0].substring(2, formula[0].length()-1));
+            String copySetString = formula[0].substring(2, formula[0].length()-1);
+            if (copySet.get(copySetString) == null) {
+                throw new Exception("Unknown copy set:" + copySetString + " in node formula.");
+            }
+            int copuSetNum = copySet.get(copySetString);
             Node root = new Node(formula[1]);
             root.parse();
             nodeFormula[copuSetNum] = root;
@@ -129,12 +151,24 @@ public class Decoder {
             String[] formula = edgeFormulaArray[i].split("=");
             String[] numInfo = formula[0].split("\\}\\{");
             String[] cSet = numInfo[0].split(",");
-            int copuSetNum1 = copySet.get(cSet[0].substring(2));
-            int copuSetNum2 = copySet.get(cSet[1]);
+            String copySetString1 = cSet[0].substring(2);
+            String copySetString2 = cSet[1];
+            if (copySet.get(copySetString1) == null) {
+                throw new Exception("Unknown copy set:" + copySetString1 + " in edge formula.");
+            }
+            if (copySet.get(copySetString1) == null) {
+                throw new Exception("Unknown copy set:" + copySetString2 + " in edge formula.");
+            }
+            int copySetNum1 = copySet.get(cSet[0].substring(2));
+            int copySetNum2 = copySet.get(cSet[1]);
+            String outputSymbol = numInfo[1].substring(0,numInfo[1].length()-1);
+            if (outputAlphabet.get(outputSymbol) == null) {
+                throw new Exception("Unknown output symbol:" + outputSymbol + " in edge formula.");
+            }
             int outputNum = outputAlphabet.get(numInfo[1].substring(0,numInfo[1].length()-1));
             Node root = new Node(formula[1]);
             root.parse();
-            edgeFormula[copuSetNum1][copuSetNum2][outputNum] = root;
+            edgeFormula[copySetNum1][copySetNum2][outputNum] = root;
         }
         //construct an instance of MSOT
         MSOT transducer = new MSOT(inputAlphabet, outputAlphabet, copySet, nodeFormula, edgeFormula);
@@ -142,13 +176,12 @@ public class Decoder {
     }
 
     /**
-     * Check whether the encoding of 2DFT is vaild
-     * @param encoding Encoding of 2DFT
+     * Check whether the encoding of the transducer is vaild
+     * @param encoding Encoding of transducer
      * @return validation of encoding
      */
-    public Boolean vaildMSOT(String encoding) {
-        //TODO: regular expression of MSOT encoding
-        String pattern = "";
+    public Boolean vaildEncoding(String encoding) {
+        String pattern = "\\(\\{.*\\}\\)";
         Boolean validation = encoding.matches(pattern);
         return validation;
     }
@@ -163,6 +196,9 @@ public class Decoder {
     public SST decodeSST(String encoding) throws Exception {
         //split the encoding string into different parts and storing in different arrays or hashmaps
         String[] sets = encoding.split("\\},\\{");
+        if (sets.length != 8) {
+            throw new Exception("Invalid SST encoding structure.");
+        }
         String[] statesArray = sets[0].substring(2).split(",");
         String[] inAlpha = sets[1].split(",");
         String[] outAlpha = sets[2].split(",");
@@ -177,6 +213,9 @@ public class Decoder {
         HashMap<String, Integer> variables = new HashMap<String, Integer>();
         for (int i = 0; i < statesArray.length; i++) {
             states.put(statesArray[i],i);
+        }
+        if (states.get(initialState) == null) {
+            throw new Exception("Unknow initial state: " + initialState + ".");
         }
         for (int i = 0; i < inAlpha.length; i++) {
             inputAlphabet.put(inAlpha[i],i);
@@ -196,6 +235,9 @@ public class Decoder {
 
         if (outputFunc.length == 1) {
             singleTrans = outputFunc[0].substring(1,outputFunc[0].length()-1).split(",");
+            if (states.get(singleTrans[0]) == null) {
+                throw new Exception("Unknow state: " + singleTrans[0] + " in partial output function.");
+            }
             int state = states.get(singleTrans[0]);
             partialOutput[state] = singleTrans[1];
         } else {
@@ -206,7 +248,10 @@ public class Decoder {
                     singleTrans = outputFunc[i].substring(0,outputFunc[i].length()-1).split(",");
                 } else {
                     singleTrans = outputFunc[i].split(",");
-                }           
+                }
+                if (states.get(singleTrans[0]) == null) {
+                    throw new Exception("Unknow state: " + singleTrans[0] + " in partial output function.");
+                }
                 int state = states.get(singleTrans[0]);
                 partialOutput[state] = singleTrans[1];
             }
@@ -214,7 +259,13 @@ public class Decoder {
         
         if (tranFunc.length == 1) {
             singleTrans = tranFunc[0].substring(1,tranFunc[0].length()-1).split(",");
+            if (states.get(singleTrans[0]) == null) {
+                throw new Exception("Unknow state: " + singleTrans[0] + " in state transition function.");
+            }
             int state = states.get(singleTrans[0]);
+            if (inputAlphabet.get(singleTrans[1]) == null) {
+                throw new Exception("Unknow input symbol: " + singleTrans[1] + " in state transition function.");
+            }
             int symbol = inputAlphabet.get(singleTrans[1]);
             stateTransition[state][symbol] = singleTrans[2];
         } else {
@@ -225,16 +276,31 @@ public class Decoder {
                     singleTrans = tranFunc[i].substring(0,tranFunc[i].length()-1).split(",");
                 } else {
                      singleTrans = tranFunc[i].split(",");
-                }      
+                }
+                if (states.get(singleTrans[0]) == null) {
+                    throw new Exception("Unknow state: " + singleTrans[0] + " in state transition function.");
+                }
                 int state = states.get(singleTrans[0]);
+                if (inputAlphabet.get(singleTrans[1]) == null) {
+                    throw new Exception("Unknow input symbol: " + singleTrans[1] + " in state transition function.");
+                }
                 int symbol = inputAlphabet.get(singleTrans[1]);
                 stateTransition[state][symbol] = singleTrans[2];
             }
         }
         if (updateFunc.length == 1) {
             singleTrans = updateFunc[0].substring(1,updateFunc[0].length()-1).split(",");
+            if (states.get(singleTrans[0]) == null) {
+                throw new Exception("Unknow state: " + singleTrans[0] + " in variable update function.");
+            }
             int state = states.get(singleTrans[0]);
+            if (inputAlphabet.get(singleTrans[1]) == null) {
+                throw new Exception("Unknow input symbol: " + singleTrans[1] + " in variable update function.");
+            }
             int symbol = inputAlphabet.get(singleTrans[1]);
+            if (variables.get(singleTrans[2]) == null) {
+                throw new Exception("Unknow variable: " + singleTrans[2] + " in variable update function.");
+            }
             int var = variables.get(singleTrans[2]);
             if (singleTrans.length == 3) {
                 variableUpdate[state][symbol][var] = "";
@@ -249,9 +315,18 @@ public class Decoder {
                      singleTrans = updateFunc[i].substring(0,updateFunc[i].length()-1).split(",");
                  } else {
                      singleTrans = updateFunc[i].split(",");
-                }          
+                }
+                if (states.get(singleTrans[0]) == null) {
+                    throw new Exception("Unknow state: " + singleTrans[0] + " in variable update function.");
+                }
                 int state = states.get(singleTrans[0]);
+                if (inputAlphabet.get(singleTrans[1]) == null) {
+                    throw new Exception("Unknow input symbol: " + singleTrans[1] + " in variable update function.");
+                }
                 int symbol = inputAlphabet.get(singleTrans[1]);
+                if (variables.get(singleTrans[2]) == null) {
+                    throw new Exception("Unknow variable: " + singleTrans[2] + " in variable update function.");
+                }
                 int var = variables.get(singleTrans[2]);
                 if (singleTrans.length == 3) {
                     variableUpdate[state][symbol][var] = "";
@@ -308,6 +383,9 @@ public class Decoder {
         //store 2DFT
         //split the encoding string into different parts and storing in different arrays or hashmaps
         String[] sets = encoding.split("\\},\\{");
+        if (sets.length != 6) {
+            throw new Exception("Invalid 2DFT encoding structure.");
+        }
         String[] statesArray = sets[0].substring(2).split(",");
         String[] inAlpha = sets[1].split(",");
         String[] outAlpha = sets[2].split(",");
@@ -321,6 +399,9 @@ public class Decoder {
         for (int i = 0; i < statesArray.length; i++) {
             states.put(statesArray[i],i);
         }
+        if (states.get(initialState) == null) {
+            throw new Exception("Unknow initial state: " + initialState + ".");
+        }
         for (int i = 0; i < inAlpha.length; i++) {
             inputAlphabet.put(inAlpha[i],i);
         }
@@ -328,6 +409,9 @@ public class Decoder {
             outputAlphabet.add(outAlpha[i]);
         }
         for (int i = 0; i < finalStatesArray.length; i++) {
+            if (states.get(finalStatesArray[i]) == null) {
+                throw new Exception("Unknow final state: " + finalStatesArray[i] + ".");
+            }
             finalStates.add(finalStatesArray[i]);
         }
         //add state m
@@ -347,8 +431,14 @@ public class Decoder {
                 singleTrans = tranFunc[i].substring(0,tranFunc[i].length()-1).split(",");
             } else {
                 singleTrans = tranFunc[i].split(",");
-            }           
+            }
+            if (states.get(singleTrans[0]) == null) {
+                throw new Exception("Unknow state: " + singleTrans[0] + " in transition function.");
+            }
             int state = states.get(singleTrans[0]);
+            if (inputAlphabet.get(singleTrans[1]) == null) {
+                throw new Exception("Unknow input symbol: " + singleTrans[1] + " in transition function.");
+            }
             int symbol = inputAlphabet.get(singleTrans[1]);
             transition[state][symbol][0] = singleTrans[2];
             transition[state][symbol][1] = singleTrans[3];
@@ -1231,6 +1321,9 @@ public class Decoder {
         //store SST
         //split the encoding string into different parts and storing in different arrays or hashmaps
         String[] sets = encoding.split("\\},\\{");
+        if (sets.length != 8) {
+            throw new Exception("Invalid SST encoding structure.");
+        }
         String[] statesArray = sets[0].substring(2).split(",");
         String[] inAlpha = sets[1].split(",");
         String[] outAlpha = sets[2].split(",");
@@ -1245,6 +1338,9 @@ public class Decoder {
         HashMap<String, Integer> variables = new HashMap<String, Integer>();
         for (int i = 0; i < statesArray.length; i++) {
             states.put(statesArray[i],i);
+        }
+        if (states.get(initialState) == null) {
+            throw new Exception("Unknow initial state: " + initialState + ".");
         }
         for (int i = 0; i < inAlpha.length; i++) {
             inputAlphabet.put(inAlpha[i],i);
@@ -1264,6 +1360,9 @@ public class Decoder {
 
         if (outputFunc.length == 1) {
             singleTrans = outputFunc[0].substring(1,outputFunc[0].length()-1).split(",");
+            if (states.get(singleTrans[0]) == null) {
+                throw new Exception("Unknow state: " + singleTrans[0] + " in partial output function.");
+            }
             int state = states.get(singleTrans[0]);
             partialOutput[state] = singleTrans[1];
         } else {
@@ -1274,7 +1373,10 @@ public class Decoder {
                     singleTrans = outputFunc[i].substring(0,outputFunc[i].length()-1).split(",");
                 } else {
                     singleTrans = outputFunc[i].split(",");
-                }           
+                }
+                if (states.get(singleTrans[0]) == null) {
+                    throw new Exception("Unknow state: " + singleTrans[0] + " in partial output function.");
+                }
                 int state = states.get(singleTrans[0]);
                 partialOutput[state] = singleTrans[1];
             }
@@ -1282,7 +1384,13 @@ public class Decoder {
         
         if (tranFunc.length == 1) {
             singleTrans = tranFunc[0].substring(1,tranFunc[0].length()-1).split(",");
+            if (states.get(singleTrans[0]) == null) {
+                throw new Exception("Unknow state: " + singleTrans[0] + " in state transition function.");
+            }
             int state = states.get(singleTrans[0]);
+            if (inputAlphabet.get(singleTrans[1]) == null) {
+                throw new Exception("Unknow input symbol: " + singleTrans[1] + " in state transition function.");
+            }
             int symbol = inputAlphabet.get(singleTrans[1]);
             stateTransition[state][symbol] = singleTrans[2];
         } else {
@@ -1293,16 +1401,31 @@ public class Decoder {
                     singleTrans = tranFunc[i].substring(0,tranFunc[i].length()-1).split(",");
                 } else {
                      singleTrans = tranFunc[i].split(",");
-                }      
+                }
+                if (states.get(singleTrans[0]) == null) {
+                    throw new Exception("Unknow state: " + singleTrans[0] + " in state transition function.");
+                }
                 int state = states.get(singleTrans[0]);
+                if (inputAlphabet.get(singleTrans[1]) == null) {
+                    throw new Exception("Unknow input symbol: " + singleTrans[1] + " in state transition function.");
+                }
                 int symbol = inputAlphabet.get(singleTrans[1]);
                 stateTransition[state][symbol] = singleTrans[2];
             }
         }
         if (updateFunc.length == 1) {
             singleTrans = updateFunc[0].substring(1,updateFunc[0].length()-1).split(",");
+            if (states.get(singleTrans[0]) == null) {
+                throw new Exception("Unknow state: " + singleTrans[0] + " in variable update function.");
+            }
             int state = states.get(singleTrans[0]);
+            if (inputAlphabet.get(singleTrans[1]) == null) {
+                throw new Exception("Unknow symbol: " + singleTrans[1] + " in variable update function.");
+            }
             int symbol = inputAlphabet.get(singleTrans[1]);
+            if (variables.get(singleTrans[2]) == null) {
+                throw new Exception("Unknow variable: " + singleTrans[2] + " in variable update function.");
+            }
             int var = variables.get(singleTrans[2]);
             if (singleTrans.length == 3) {
                 variableUpdate[state][symbol][var] = "";
@@ -1317,9 +1440,18 @@ public class Decoder {
                      singleTrans = updateFunc[i].substring(0,updateFunc[i].length()-1).split(",");
                  } else {
                      singleTrans = updateFunc[i].split(",");
-                }          
+                }
+                if (states.get(singleTrans[0]) == null) {
+                    throw new Exception("Unknow state: " + singleTrans[0] + " in variable update function.");
+                }
                 int state = states.get(singleTrans[0]);
+                if (inputAlphabet.get(singleTrans[1]) == null) {
+                    throw new Exception("Unknow input symbol: " + singleTrans[1] + " in variable update function.");
+                }
                 int symbol = inputAlphabet.get(singleTrans[1]);
+                if (variables.get(singleTrans[2]) == null) {
+                    throw new Exception("Unknow variable: " + singleTrans[2] + " in variable update function.");
+                }
                 int var = variables.get(singleTrans[2]);
                 if (singleTrans.length == 3) {
                     variableUpdate[state][symbol][var] = "";
