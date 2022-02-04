@@ -1,4 +1,6 @@
 package simulator;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Scanner;
 
 import simulator.transducer.*;
@@ -46,6 +48,28 @@ public class Simulator {
         simulator.run();
     }
 
+    public String readEncoding(String path) throws Exception{
+        String modelDesc= "";
+        int data;
+
+        try (FileInputStream fileInputStream = new FileInputStream(path)) {
+            data = fileInputStream.read();
+            while(data != -1) {
+                // ignore tab, space and return characters
+                if ((char) data == ' ' || data == 9 || data == 10 || data == 13) {
+                    data = fileInputStream.read();
+                } else {
+                    modelDesc+=(char) data;
+                    data = fileInputStream.read();
+                }
+            }
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+
+        return modelDesc;
+    }
+
     private void run(){
 
         // initialise a scanner for user input
@@ -72,7 +96,8 @@ public class Simulator {
             choice = -1;
         }
 
-        String modelDesc;
+        String modelDesc="";
+        String path;
         String inputString;
         //construct model instance according to model input
         while (choice != 0) {
@@ -80,15 +105,32 @@ public class Simulator {
                 // initialise different transducer according to model choice
                 switch (choice) {
                     case 1:
-                        //ask user for model encoding
-                        System.out.println("Please enter the encoding of 2DFT:");
-                        modelDesc = sc.nextLine();
-                        while (!decoder.vaildEncoding(modelDesc) && !modelDesc.equals("q")) {
-                            System.err.println("Encoding invalid.");
-                            System.out.println("Please enter the encoding of 2DFT:");
-                            modelDesc = sc.nextLine();
+                        //ask user for file address of model encoding
+                        System.out.println("Please enter file address of the encoding of 2DFT:");
+                        path = sc.nextLine();
+                        if (path.equals("q")) {
+                            break;
                         }
-                        if (modelDesc.equals("q")) {
+                        try {
+                            modelDesc = readEncoding(path);
+                        } catch (Exception e1) {
+                            e1.printStackTrace();
+                        }
+                        while (!decoder.vaildEncoding(modelDesc) && !path.equals("q")) {
+                            System.err.println("Encoding invalid.");
+                            //ask user for file address of model encoding again
+                            System.out.println("Please enter file address of the encoding of 2DFT:");
+                            path = sc.nextLine();
+                            if (path.equals("q")) {
+                                break;
+                            }
+                            try {
+                                modelDesc = readEncoding(path);
+                            } catch (Exception e1) {
+                                e1.printStackTrace();
+                            }
+                        }
+                        if (path.equals("q")) {
                             break;
                         }
                         TDFT tdft;
@@ -119,15 +161,32 @@ public class Simulator {
                         }
                         break;
                     case 2:
-                        //ask user for model encoding
-                        System.out.println("Please enter the encoding of MSOT:");
-                        modelDesc = sc.nextLine();
-                        while (!decoder.vaildEncoding(modelDesc) && !modelDesc.equals("q")) {
-                            System.err.println("Encoding invalid.");
-                            System.out.println("Please enter the encoding of MSOT:");
-                            modelDesc = sc.nextLine();
+                        //ask user for file address of model encoding
+                        System.out.println("Please enter file address of the encoding of MSOT:");
+                        path = sc.nextLine();
+                        if (path.equals("q")) {
+                            break;
                         }
-                        if (modelDesc.equals("q")) {
+                        try {
+                            modelDesc = readEncoding(path);
+                        } catch (Exception e1) {
+                            e1.printStackTrace();
+                        }
+                        while (!decoder.vaildEncoding(modelDesc) && !path.equals("q")) {
+                            System.err.println("Encoding invalid.");
+                            //ask user for file address of model encoding again
+                            System.out.println("Please enter file address of the encoding of MSOT:");
+                            path = sc.nextLine();
+                            if (path.equals("q")) {
+                                break;
+                            }
+                            try {
+                                modelDesc = readEncoding(path);
+                            } catch (Exception e1) {
+                                e1.printStackTrace();
+                            }
+                        }
+                        if (path.equals("q")) {
                             break;
                         }
                         MSOT msot;
@@ -158,15 +217,32 @@ public class Simulator {
                         }
                         break;
                     case 3:
-                        //ask user for model encoding
-                        System.out.println("Please enter the encoding of SST:");
-                        modelDesc = sc.nextLine();
-                        while (!decoder.vaildEncoding(modelDesc) && !modelDesc.equals("q")) {
-                            System.err.println("Encoding invalid.");
-                            System.out.println("Please enter the encoding of transducer:");
-                            modelDesc = sc.nextLine();
+                        //ask user for file address of model encoding
+                        System.out.println("Please enter file address of the encoding of SST:");
+                        path = sc.nextLine();
+                        if (path.equals("q")) {
+                            break;
                         }
-                        if (modelDesc.equals("q")) {
+                        try {
+                            modelDesc = readEncoding(path);
+                        } catch (Exception e1) {
+                            e1.printStackTrace();
+                        }
+                        while (!decoder.vaildEncoding(modelDesc) && !path.equals("q")) {
+                            System.err.println("Encoding invalid.");
+                            //ask user for file address of model encoding again
+                            System.out.println("Please enter file address of the encoding of SST:");
+                            path = sc.nextLine();
+                            if (path.equals("q")) {
+                                break;
+                            }
+                            try {
+                                modelDesc = readEncoding(path);
+                            } catch (Exception e1) {
+                                e1.printStackTrace();
+                            }
+                        }
+                        if (path.equals("q")) {
                             break;
                         }
                         SST sst;
@@ -197,15 +273,32 @@ public class Simulator {
                         }
                         break;
                     case 4:
-                        //ask user for model encoding
-                        System.out.println("Please enter the encoding of 2DFT:");
-                        modelDesc = sc.nextLine();
-                        while (!decoder.vaildTDFT(modelDesc) && !modelDesc.equals("q")) {
-                            System.err.println("Encoding invalid.");
-                            System.out.println("Please enter the encoding of 2DFT:");
-                            modelDesc = sc.nextLine();
+                        //ask user for file address of model encoding
+                        System.out.println("Please enter file address of the encoding of 2DFT:");
+                        path = sc.nextLine();
+                        if (path.equals("q")) {
+                            break;
                         }
-                        if (modelDesc.equals("q")) {
+                        try {
+                            modelDesc = readEncoding(path);
+                        } catch (Exception e1) {
+                            e1.printStackTrace();
+                        }
+                        while (!decoder.vaildTDFT(modelDesc) && !path.equals("q")) {
+                            System.err.println("Encoding invalid.");
+                            //ask user for file address of model encoding again
+                            System.out.println("Please enter file address of the encoding of 2DFT:");
+                            path = sc.nextLine();
+                            if (path.equals("q")) {
+                                break;
+                            }
+                            try {
+                                modelDesc = readEncoding(path);
+                            } catch (Exception e1) {
+                                e1.printStackTrace();
+                            }
+                        }
+                        if (path.equals("q")) {
                             break;
                         }
                         String SSTDesc = "";
@@ -217,8 +310,8 @@ public class Simulator {
                             System.err.println("Construction Error. Please check encoding of 2DFT.");
                             break;
                         }
-                        System.out.println("Encoding of SST:");
-                        System.out.println(SSTDesc);
+                        // System.out.println("Encoding of SST:");
+                        // System.out.println(SSTDesc);
                         
                         try {
                             decoder.generateSSTGraphPDF(SSTDesc);
@@ -229,15 +322,32 @@ public class Simulator {
                         }
                         break;
                     case 5:
-                        //ask user for model encoding
-                        System.out.println("Please enter the encoding of SST:");
-                        modelDesc = sc.nextLine();
-                        while (!decoder.vaildSST(modelDesc) && !modelDesc.equals("q")) {
-                            System.err.println("Encoding invalid.");
-                            System.out.println("Please enter the encoding of 2DFT:");
-                            modelDesc = sc.nextLine();
+                        //ask user for file address of model encoding
+                        System.out.println("Please enter file address of the encoding of SST:");
+                        path = sc.nextLine();
+                        if (path.equals("q")) {
+                            break;
                         }
-                        if (modelDesc.equals("q")) {
+                        try {
+                            modelDesc = readEncoding(path);
+                        } catch (Exception e1) {
+                            e1.printStackTrace();
+                        }
+                        while (!decoder.vaildSST(modelDesc) && !path.equals("q")) {
+                            System.err.println("Encoding invalid.");
+                            //ask user for file address of model encoding again
+                            System.out.println("Please enter file address of the encoding of SST:");
+                            path = sc.nextLine();
+                            if (path.equals("q")) {
+                                break;
+                            }
+                            try {
+                                modelDesc = readEncoding(path);
+                            } catch (Exception e1) {
+                                e1.printStackTrace();
+                            }
+                        }
+                        if (path.equals("q")) {
                             break;
                         }
                         String TDFTDesc = "";
@@ -248,8 +358,8 @@ public class Simulator {
                             System.err.println("Construction Error. Please check encoding of SST.");
                             break;
                         }
-                        System.out.println("Encoding of 2DFT:");
-                        System.out.println(TDFTDesc);
+                        // System.out.println("Encoding of 2DFT:");
+                        // System.out.println(TDFTDesc);
 
                         try {
                             decoder.generateTDFTGraphPDF(TDFTDesc);
