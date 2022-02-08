@@ -108,6 +108,14 @@ public class SST extends Transducer{
             output = "";
         }
         System.out.printf("\n");
+        System.out.println("Variables:");
+        for (String variable : variables.keySet()) {
+            if (variableValue.get(variable) != null) {
+                System.out.println(variable + ": " + variableValue.get(variable));
+            } else {
+                System.out.println(variable + ": \u03B5");      //print epslion symbol
+            }
+        }
         return output;
     }
 
