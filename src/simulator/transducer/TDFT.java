@@ -41,7 +41,7 @@ public class TDFT extends Transducer{
         // current state
         String currState = initialState;
         System.out.println("Running chain of states:");
-        System.out.printf(currState);
+        System.out.printf("(" + currState + ",1)");
         // current position on input tape
         int currPosition = 1;
         String output = "";
@@ -60,7 +60,7 @@ public class TDFT extends Transducer{
             if (currPosition < 0) {
                 output = "";
             }
-            System.out.printf("->" + currState);
+            System.out.printf("->(" + currState + "," + currPosition + ")");
         }
         System.out.printf("\n");
         return output;

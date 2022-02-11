@@ -2154,7 +2154,7 @@ public class Decoder {
         //         Aencoding +=  "," + symbol;
         //     }
         // }
-        // Aencoding += "},\n\t{";
+        // Aencoding += "},\n\t{\n";
 
         // //add variable sets
         // isFirst = true;
@@ -2175,7 +2175,7 @@ public class Decoder {
         // }
 
         // //add initial state
-        // Aencoding += "},\n\t{"+ initialStateA +"},\n\t{";
+        // Aencoding += "\n\t},\n\t{"+ initialStateA +"},\n\t{";
 
         // //add final state
         // isFirst = true;
@@ -2226,7 +2226,7 @@ public class Decoder {
         //         Bencoding +=  "," + symbol;
         //     }
         // }
-        // Bencoding += "},\n\t{";
+        // Bencoding += "},\n\t{\n";
 
         // //add variable sets
         // isFirst = true;
@@ -2247,7 +2247,7 @@ public class Decoder {
         // }
 
         // //add initial state
-        // Bencoding += "},\n\t{"+ initialStateB +"},\n\t{";
+        // Bencoding += "\n\t},\n\t{"+ initialStateB +"},\n\t{";
 
         // //add final state
         // isFirst = true;
@@ -2538,7 +2538,7 @@ public class Decoder {
             e.printStackTrace();
         }
         
-        System.out.println("latex for a graph of SST is generated in ./graph/SSTGraph.tex");
+        System.out.println("LaTex file for a graph of SST is generated in ./graph/SSTGraph.tex");
     }
 
     public void generateTDFTGraphPDF(String encoding) throws Exception {
@@ -2607,8 +2607,14 @@ public class Decoder {
         String lastState = initialState;
         for (int index = 0; index < statesArray.length; index++) {
             if (!statesArray[index].equals(initialState)) {
-                SSTLatex += "\\node[state] (" + statesArray[index] + ") [right of=" + lastState + "] {$" + statesArray[index] + "$};\n";
-                lastState = statesArray[index];
+                if (finalStates.contains(statesArray[index])) {
+                    SSTLatex += "\\node[state,accepting] (" + statesArray[index] + ") [right of=" + lastState + "] {$" + statesArray[index] + "$};\n";
+                    lastState = statesArray[index];
+                } else {
+                    SSTLatex += "\\node[state] (" + statesArray[index] + ") [right of=" + lastState + "] {$" + statesArray[index] + "$};\n";
+                    lastState = statesArray[index];
+                }
+
             }
         }
 
@@ -2619,67 +2625,68 @@ public class Decoder {
                 int symbolNum = inputAlphabet.get(symbol);
                 if (transition[i][symbolNum][2] != null) {
                     int rightState = states.get((String)transition[i][symbolNum][1]);
+                    String movement = String.valueOf((int)transition[i][symbolNum][2]);
                     if (i == rightState) {
                         if (symbol.equals("^")) {
-                            if (((String)transition[i][symbolNum][0]).equals("")) {
+                            if (transition[i][symbolNum][0] == null || ((String)transition[i][symbolNum][0]).equals("")) {
                                 SSTLatex += "edge [loop] node [swap] {"
-                                         + "$\\string^" + "|" + "\\varepsilon$"
+                                         + "$\\vdash$" + " $|$ " + "$\\epsilon$" + "," + movement
                                          + "} ()\n";
                             } else {
                                 SSTLatex += "edge [loop] node [swap] {"
-                                         + "$\\string^" + "|" + (String)transition[i][symbolNum][0] + "$"
+                                         + "$\\vdash$" + " $|$ " + (String)transition[i][symbolNum][0] + "," + movement
                                          + "} ()\n";
                             }
                         } else if (symbol.equals("$")) {
-                            if (((String)transition[i][symbolNum][0]).equals("")) {
+                            if (transition[i][symbolNum][0] == null || ((String)transition[i][symbolNum][0]).equals("")) {
                                 SSTLatex += "edge [loop] node [swap] {"
-                                         + "$\\" + symbol + "|" + "\\varepsilon$"
+                                         + "$\\dashv$" + " $|$ " + "$\\epsilon$" + "," + movement
                                          + "} ()\n";
                             } else {
                                 SSTLatex += "edge [loop] node [swap] {"
-                                         + "$\\" + symbol + "|" + (String)transition[i][symbolNum][0] + "$"
+                                         + "$\\dashv$" +  " $|$ " + (String)transition[i][symbolNum][0] + "," + movement
                                          + "} ()\n";
                             }
                         } else {
-                            if (((String)transition[i][symbolNum][0]).equals("")) {
+                            if (transition[i][symbolNum][0] == null || ((String)transition[i][symbolNum][0]).equals("")) {
                                 SSTLatex += "edge [loop] node [swap] {"
-                                         + "$" + symbol + "|" + "\\varepsilon$"
+                                         + symbol + " $|$ " + "$\\epsilon$" + "," + movement
                                          + "} ()\n";
                             } else {
                                 SSTLatex += "edge [loop] node [swap] {"
-                                         + "$" + symbol + "|" + (String)transition[i][symbolNum][0] + "$"
+                                         + symbol + " $|$ " + (String)transition[i][symbolNum][0] + "," + movement
                                          + "} ()\n";
                             }
                         }
                     } else {
                         if (symbol.equals("^")) {
-                            if (((String)transition[i][symbolNum][0]).equals("")) {
+                            if (transition[i][symbolNum][0] == null || ((String)transition[i][symbolNum][0]).equals("")) {
                                 SSTLatex += "edge [bend left] node {"
-                                         + "$\\string^" + "\\|" + "\\varepsilon$"
+                                         + "$\\vdash$" + " $|$ " + "$\\epsilon$" + "," + movement
                                          + "} (" + (String)transition[i][symbolNum][1] + ")\n";
                             } else {
                                 SSTLatex += "edge [bend left] node {"
-                                         + "$\\string^" + "\\|" + (String)transition[i][symbolNum][0] + "$"
+                                         + "$\\vdash$" + " $|$ " + (String)transition[i][symbolNum][0] + "," + movement
                                          + "} (" + (String)transition[i][symbolNum][1] + ")\n";
                             }
                         } else if (symbol.equals("$")) {
-                            if (((String)transition[i][symbolNum][0]).equals("")) {
+                            if (transition[i][symbolNum][0] == null || ((String)transition[i][symbolNum][0]).equals("")) {
                                 SSTLatex += "edge [bend left] node {"
-                                         + "$\\" + symbol + "\\|" + "\\varepsilon$"
+                                         + "$\\dashv$" + " $|$ " + "$\\epsilon$" + "," + movement
                                          + "} (" + (String)transition[i][symbolNum][1] + ")\n";
                             } else {
                                 SSTLatex += "edge [bend left] node {"
-                                         + "$\\" + symbol + "|" + (String)transition[i][symbolNum][0] + "$"
+                                         + "$\\dashv$" + " $|$ " + (String)transition[i][symbolNum][0] + "," + movement
                                          + "} (" + (String)transition[i][symbolNum][1] + ")\n";
                             }
                         } else {
-                            if (((String)transition[i][symbolNum][0]).equals("")) {
+                            if (transition[i][symbolNum][0] == null || ((String)transition[i][symbolNum][0]).equals("")) {
                                 SSTLatex += "edge [bend left] node {"
-                                         + "$" + symbol + "|" + "\\varepsilon$"
+                                         + symbol + " $|$ " + "$\\epsilon$" + "," + movement
                                          + "} (" + (String)transition[i][symbolNum][1] + ")\n";
                             } else {
                                 SSTLatex += "edge [bend left] node {"
-                                         + "$" + symbol + "|" + (String)transition[i][symbolNum][0] + "$"
+                                         + symbol + " $|$ " + (String)transition[i][symbolNum][0] + "," + movement
                                          + "} (" + (String)transition[i][symbolNum][1] + ")\n";
                             }
                         }
@@ -2710,7 +2717,7 @@ public class Decoder {
             e.printStackTrace();
         }
         
-        System.out.println("latex for a graph of SST is generated in ./graph/TDFTGraph.tex");
+        System.out.println("LaTex file for a graph of SST is generated in ./graph/TDFTGraph.tex");
     }
 
     public static boolean isInList(ArrayList<Integer[]> list, Integer[] candidate){
