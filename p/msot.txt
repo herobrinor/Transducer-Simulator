@@ -1,0 +1,17 @@
+(
+    {a,b},
+    {a,b},
+    {1,2},
+    {
+        F{1}=(out{a}(x))+(out{b}(x));
+        F{2}=true
+    },
+    {
+        F{1,1}{a}=edge{a}(x,y);
+        F{1,1}{b}=edge{b}(x,y);
+        F{1,2}{a}=(out{a}(x))*((!out{a}(y))*(!out{b}(y)));
+        F{1,2}{b}=(out{b}(x))*((!out{a}(y))*(!out{b}(y)));
+        F{2,2}{a}=edge{a}(y,x);
+        F{2,2}{b}=edge{b}(y,x)
+    }
+)
