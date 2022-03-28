@@ -16,7 +16,8 @@ A simulator for different transducer models, written in Java
 
 ## Testing examples
 All testing examples are stored in ./src/test/  
-Description of each transduction function and  are in file example_model.txt
+Example 2DFT that performs trasduction function one: ./src/test/tdftf1.txt  
+Description of each transduction function and MSO encoding rules are in file example_model.txt
 
 ## Compile instructions
 * For windows:  
