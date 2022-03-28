@@ -15,15 +15,17 @@ A simulator for different transducer models, written in Java
 # Instructions
 
 ## Testing examples
-All testing examples are stored in ./src/test/
+All testing examples are stored in ./src/test/  
 Description of each transduction function and  are in file example_model.txt
 
 ## Compile instructions
-* For windows:
-    javac -d bin .\src\simulator\transducer\*.java .\src\simulator\util\*.java .\src\simulator\*.java
+* For windows:  
+    javac -d bin .\src\simulator\transducer\*.java .\src\simulator\util\*.java .\src\simulator\*.java  
     java -cp bin simulator.Simulator
-* For linux:
-    javac -d bin ./src/simulator/transducer/*.java ./src/simulator/util/*.java ./src/simulator/*.java
+* For linux:  
+    javac -d bin ./src/simulator/transducer/*.java ./src/simulator/util/*.java ./src/simulator/*.java  
     java -cp bin simulator.Simulator
+
+Compile tex file using an editor such as TeXstudio or command lines to get the pdf file of the state diagram.
 ## Extra information
-input q to return to previous menu
+Enter q to return to previous menu
