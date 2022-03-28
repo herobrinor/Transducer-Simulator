@@ -444,26 +444,8 @@ public class Decoder {
             transition[state][symbol][1] = singleTrans[3];
             transition[state][symbol][2] = Integer.parseInt(singleTrans[4]);
         }
-        // // add new transtion functions to make 2DFT start in left endmarker
-        // int initialStateNum = states.get(initialState);
-        // transition[initialStateNum][inAlpha.length][0] = "";
-        // transition[initialStateNum][inAlpha.length][1] = initialState;
-        // transition[initialStateNum][inAlpha.length][2] = 1;
-        // // add new transtion functions to make 2DFT end in right endmarker
-        // for (int i = 0; i < finalStatesArray.length; i++) {
-        //     int state = states.get(finalStatesArray[i]);
-        //     for (int j = 0; j < inAlpha.length; j++) {
-        //         transition[state][j][0] = "";
-        //         transition[state][j][1] = finalStatesArray[i];
-        //         transition[state][j][2] = 1;
-        //     }
-        //     transition[state][inAlpha.length+1][0] = "";
-        //     transition[state][inAlpha.length+1][1] = finalStatesArray[i]+"'";
-        //     transition[state][inAlpha.length+1][2] = 1;
-        // }
 
         //construct new states in SST
-        //use decimal number to represent a N-base number as the states of SST
         //starting state is identity function form Q to Q U {m, qerr, qloop}.
         int base = states.size();
         //store visited states, exploring states, variable-update function, state-transition function and pratial output function
@@ -637,7 +619,7 @@ public class Decoder {
         sharedVariableUpdateFunc.add(sharedVarUp);
         sharedVariableStates.add(sharedVarState);
 
-        //compute partial output func
+        //compute partial output function
         String output = variableArray[base-3];
         String finalState = "m";
         int mState = firstState[base-3];
@@ -694,7 +676,8 @@ public class Decoder {
                     }
                 }
             }
-            for (int i = 0; i < inAlpha.length; i++) {//for every input Symbol
+            // create new states for every input Symbol
+            for (int i = 0; i < inAlpha.length; i++) {
                 nextState = new Integer[base-2];
                 int[] merging = new int[base-3];
                 String[] newSharedVarState = new String[base-3];
@@ -901,23 +884,7 @@ public class Decoder {
                         }
                     }
                 }
-                // compute newSharedVarState
-                // for (int j = 0; j < base-3; j++) {
-                //     boolean sharedFlag = false;
-                //     int sharedPosition = 0;
-                //     char[] updateArray = varUp[i][j].toCharArray();
-                //     for (int k = 0; k < updateArray.length; k++) {
-                //         if (sharedVariables.containsKey(String.valueOf(updateArray[k]))) {
-                //             sharedFlag = true;
-                //             sharedPosition = k;
-                //             break;
-                //         }
-                //     }
-                //     if (sharedFlag) {
-                //         newSharedVarState[j] = varUp[i][j].substring(sharedPosition);
-                //         varUp[i][j] = varUp[i][j].substring(0, sharedPosition);
-                //     }
-                // }
+
                 // check for state merging and update shared variables
                 for (int j = 0; j < merging.length; j++) {
                     if (merging[j] > 1) {
@@ -1088,8 +1055,7 @@ public class Decoder {
                         newSharedVarState[index] = null;
                     }
                 }
-                // System.out.println(Arrays.toString(newSharedVarState));
-                // System.out.println(Arrays.toString(sharedVarCount));
+                
                 //check if this state is duplicated or was explored before
                 stateUp[i][0] = nextState;
                 stateUp[i][1] = newSharedVarState;
@@ -1293,22 +1259,6 @@ public class Decoder {
             }
         }
         SSTencoding += "\n\t}\n)";
-
-        // for (int index = 0; index < newStateArrayList.size(); index++) {
-        //     System.out.println(Arrays.toString(newStateArrayList.get(index)));
-        // }
-        // for (int index = 0; index < newSharedVarStateArrayList.size(); index++) {
-        //     System.out.println(Arrays.toString(newSharedVarStateArrayList.get(index)));
-        // }
-        // for (int index = 0; index < sharedVariableStates.size(); index++) {
-        //     System.out.println(Arrays.toString(SSTState.get(index)));
-        // }
-        // for (int index = 0; index < sharedVariableStates.size(); index++) {
-        //     System.out.println(Arrays.toString(sharedVariableStates.get(index)));
-        // }
-        // for (int index = 0; index < partialOutputFunc.size(); index++) {
-        //     System.out.println(partialOutputFunc.get(index));
-        // }
         
         //output the encoding of SST in a file
         byte[]sourceByte = SSTencoding.getBytes();
@@ -1710,12 +1660,8 @@ public class Decoder {
                 }
             }
         }
-
-        // SST sst = new SST(initialState, states, inputAlphabet, outputAlphabet, variables, partialOutput, stateTransition, variableUpdate);
-        // TDFT A = new TDFT(initialStateA, statesA, finalStatesA, inputAlphabetA, outputAlphabetA, transitionA);
-        // TDFT B = new TDFT(initialStateB, statesB, finalStatesB, inputAlphabetB, outputAlphabetB, transitionB);
         
-        //construct the final 2DFT T = A o B
+        // construct the final 2DFT T = A o B
         // state of T is a function f of Q (set of state of A) x a control state C (forwarding or searching or found or returning or error) x state of A x state of B 
         Integer[] initialStateT = new Integer[statesA.size()+3];
         initialStateT[statesA.size()] = 0;
@@ -2326,6 +2272,11 @@ public class Decoder {
         return Tencoding;
     }
 
+    /**
+     * Generate state diagram of SST
+     * @param encoding Encoding of SST
+     * @return void
+     */
     public void generateSSTGraphPDF(String encoding) throws Exception {
         //delete all space, tab, return characters in encoding string
         encoding = encoding.replaceAll("\t", "");
@@ -2541,6 +2492,11 @@ public class Decoder {
         System.out.println("LaTex file for a graph of SST is generated in ./graph/SSTGraph.tex");
     }
 
+    /**
+     * Generate state diagram of 2DFT
+     * @param encoding Encoding of 2DFT
+     * @return void
+     */
     public void generateTDFTGraphPDF(String encoding) throws Exception {
         //delete all space, tab, return characters in encoding string
         encoding = encoding.replaceAll("\t", "");
@@ -2720,6 +2676,12 @@ public class Decoder {
         System.out.println("LaTex file for a graph of SST is generated in ./graph/TDFTGraph.tex");
     }
 
+    /**
+     * Check whether element is in the list
+     * @param list list to be checked
+     * @param candidate element (an integer array)
+     * @return True or False
+     */
     public static boolean isInList(ArrayList<Integer[]> list, Integer[] candidate){
         for(Integer[] item : list){
             if (Arrays.equals(item, candidate)) {
@@ -2729,6 +2691,12 @@ public class Decoder {
         return false;
     }
 
+    /**
+     * Check whether element is in the queue
+     * @param queue queue to be checked
+     * @param candidate element (an integer array)
+     * @return True or False
+     */
     public static boolean isInQueue(Queue<Integer[]> queue, Integer[] candidate){
         for(Integer[] item : queue){
             if (Arrays.equals(item, candidate)) {

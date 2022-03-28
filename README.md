@@ -2,16 +2,28 @@
 
 A simulator for different transducer models, written in Java
 
-## Transducer models to do
+## Transducer models
 
 * Deterministic Two-way Transducers (2DFT)
 * Deterministic MSO transducer (MSOT)
 * (copyless) Streaming String Transducer (SST)
-* Heap-based Transducers (disallow traversal in normal nodes captures exactly regular functions)
 
-## Translation algorithms between models to do
+## Translation algorithms between models
 
 * 2DFT <> SST
-* SST > MOST
-* Heap-based Transducers <> SST
-* 2DFT > MOST
+
+# Instructions
+
+## Testing examples
+All testing examples are stored in ./src/test/
+Description of each transduction function and  are in file example_model.txt
+
+## Compile instructions
+* For windows:
+    javac -d bin .\src\simulator\transducer\*.java .\src\simulator\util\*.java .\src\simulator\*.java
+    java -cp bin simulator.Simulator
+* For linux:
+    javac -d bin ./src/simulator/transducer/*.java ./src/simulator/util/*.java ./src/simulator/*.java
+    java -cp bin simulator.Simulator
+## Extra information
+input q to return to previous menu
