@@ -21,10 +21,10 @@ Description of each transduction function and MSO encoding rules are in file exa
 
 ## Compile instructions
 * For windows:  
-    javac -d bin .\src\simulator\transducer\*.java .\src\simulator\util\*.java .\src\simulator\*.java  
+    javac -d bin .\src\simulator\transducer\\\*.java .\src\simulator\util\\\*.java .\src\simulator\\\*.java  
     java -cp bin simulator.Simulator
 * For linux:  
-    javac -d bin ./src/simulator/transducer/*.java ./src/simulator/util/*.java ./src/simulator/*.java  
+    javac -d bin ./src/simulator/transducer/\*.java ./src/simulator/util/\*.java ./src/simulator/\*.java  
     java -cp bin simulator.Simulator
 
 Compile tex file using an editor such as TeXstudio or command lines to get the pdf file of the state diagram.
